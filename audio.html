@@ -1,0 +1,276 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ElevenLabs Audio Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: #f0f0f0;
+        }
+        
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .error {
+            color: #dc3545;
+        }
+        
+        .success {
+            color: #28a745;
+        }
+        
+        .info {
+            color: #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ElevenLabs Audio Test</h1>
+        <p>Test different audio formats to see what works on your Raspberry Pi</p>
+        
+        <button id="testMP3" onclick="testElevenLabs('mp3')">Test MP3 Format</button>
+        <button id="testWAV" onclick="testElevenLabs('wav')">Test WAV Format</button>
+        <button id="testPCM" onclick="testElevenLabs('pcm')">Test PCM Format</button>
+        <button id="testFallback" onclick="testFallback()">Test Browser Speech</button>
+        
+        <div id="status">Ready to test audio...</div>
+    </div>
+
+    <script>
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = type;
+        }
+
+        function testElevenLabs(format) {
+            updateStatus(`Testing ${format.toUpperCase()} format...`, 'info');
+            
+            let url, headers;
+            
+            if (format === 'mp3') {
+                url = "https://api.elevenlabs.io/v1/text-to-speech/UEKYgullGqaF0keqT8Bu";
+                headers = {
+                    "xi-api-key": "sk_9440bc2a714e5a69044e66ff5b2afb46f646d86774c06b61",
+                    "Content-Type": "application/json",
+                    "Accept": "audio/mpeg"
+                };
+            } else if (format === 'wav') {
+                url = "https://api.elevenlabs.io/v1/text-to-speech/UEKYgullGqaF0keqT8Bu";
+                headers = {
+                    "xi-api-key": "sk_9440bc2a714e5a69044e66ff5b2afb46f646d86774c06b61",
+                    "Content-Type": "application/json",
+                    "Accept": "audio/wav"
+                };
+            } else if (format === 'pcm') {
+                url = "https://api.elevenlabs.io/v1/text-to-speech/UEKYgullGqaF0keqT8Bu/stream?output_format=pcm_16000";
+                headers = {
+                    "xi-api-key": "sk_9440bc2a714e5a69044e66ff5b2afb46f646d86774c06b61",
+                    "Content-Type": "application/json"
+                };
+            }
+
+            fetch(url, {
+                method: "POST",
+                headers: headers,
+                body: JSON.stringify({
+                    text: "Hello! This is a test of ElevenLabs text to speech on your Raspberry Pi.",
+                    voice_settings: {
+                        stability: 0.9,
+                        similarity_boost: 0.75
+                    }
+                })
+            })
+            .then(res => {
+                console.log(`${format} API Response:`, res.status, res.statusText);
+                updateStatus(`${format} API responded with status: ${res.status}`, 'info');
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
+                if (format === 'pcm') {
+                    return res.arrayBuffer();
+                } else {
+                    return res.blob();
+                }
+            })
+            .then(audioData => {
+                if (format === 'pcm') {
+                    // Handle PCM data with Web Audio API
+                    handlePCMAudio(audioData);
+                } else {
+                    // Handle MP3/WAV blob
+                    handleBlobAudio(audioData, format);
+                }
+            })
+            .catch(err => {
+                console.error(`${format} Error:`, err);
+                updateStatus(`${format} failed: ${err.message}`, 'error');
+            });
+        }
+
+        function handleBlobAudio(blob, format) {
+            updateStatus(`Got ${format} blob (${blob.size} bytes), attempting playback...`, 'info');
+            
+            const audio = new Audio();
+            const audioUrl = URL.createObjectURL(blob);
+            audio.src = audioUrl;
+            
+            audio.onloadstart = () => {
+                console.log(`${format}: Loading started`);
+            };
+            
+            audio.oncanplay = () => {
+                console.log(`${format}: Can start playing`);
+                updateStatus(`${format} audio loaded, starting playback...`, 'info');
+            };
+            
+            audio.oncanplaythrough = () => {
+                console.log(`${format}: Can play through`);
+                audio.play().then(() => {
+                    updateStatus(`${format} playing successfully! 🎉`, 'success');
+                }).catch(playErr => {
+                    console.error(`${format} play error:`, playErr);
+                    updateStatus(`${format} playback failed: ${playErr.message}`, 'error');
+                });
+            };
+            
+            audio.onerror = (e) => {
+                console.error(`${format} audio error:`, e);
+                updateStatus(`${format} audio error: ${e.type}`, 'error');
+                URL.revokeObjectURL(audioUrl);
+            };
+            
+            audio.onended = () => {
+                console.log(`${format}: Playback finished`);
+                updateStatus(`${format} playback completed successfully! ✅`, 'success');
+                URL.revokeObjectURL(audioUrl);
+            };
+            
+            // Force load
+            audio.load();
+        }
+
+        function handlePCMAudio(arrayBuffer) {
+            updateStatus(`Got PCM data (${arrayBuffer.byteLength} bytes), decoding...`, 'info');
+            
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                audioContext.decodeAudioData(arrayBuffer)
+                .then(audioBuffer => {
+                    updateStatus('PCM decoded successfully, playing...', 'info');
+                    
+                    const source = audioContext.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(audioContext.destination);
+                    
+                    source.onended = () => {
+                        updateStatus('PCM playback completed successfully! ✅', 'success');
+                    };
+                    
+                    source.start();
+                    updateStatus('PCM playing successfully! 🎉', 'success');
+                })
+                .catch(decodeErr => {
+                    console.error('PCM decode error:', decodeErr);
+                    updateStatus(`PCM decode failed: ${decodeErr.message}`, 'error');
+                });
+            } catch (contextErr) {
+                console.error('Audio context error:', contextErr);
+                updateStatus(`PCM context error: ${contextErr.message}`, 'error');
+            }
+        }
+
+        function testFallback() {
+            updateStatus('Testing browser speech synthesis...', 'info');
+            
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance("Hello! This is a test of browser speech synthesis on your Raspberry Pi.");
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                
+                utterance.onstart = () => {
+                    updateStatus('Browser speech playing successfully! 🎉', 'success');
+                };
+                
+                utterance.onend = () => {
+                    updateStatus('Browser speech completed successfully! ✅', 'success');
+                };
+                
+                utterance.onerror = (e) => {
+                    updateStatus(`Browser speech error: ${e.error}`, 'error');
+                };
+                
+                speechSynthesis.speak(utterance);
+            } else {
+                updateStatus('Speech synthesis not supported in this browser', 'error');
+            }
+        }
+
+        // Test audio context availability on load
+        window.onload = () => {
+            console.log('Page loaded, checking audio capabilities...');
+            
+            if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
+                console.log('Web Audio API available');
+            } else {
+                console.log('Web Audio API not available');
+            }
+            
+            if ('speechSynthesis' in window) {
+                console.log('Speech Synthesis API available');
+            } else {
+                console.log('Speech Synthesis API not available');
+            }
+        };
+    </script>
+</body>
+</html>
