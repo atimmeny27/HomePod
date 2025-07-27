@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JARVIS Home Screen</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: rgb(0, 0, 0);
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+    }
+
+    .container {
+      position: relative;
+      width: 1080px;
+      height: 1080px;
+      margin: 0 auto;
+      background-image: url('./resources/background.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Outer glowing ring */
+    .lightblue-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1080px;
+      height: 1080px;
+      border: 2px solid #9df;
+      background-color: transparent;
+      border-radius: 50%;
+      box-shadow: 0 0 30px #9df, 0 0 60px rgba(153, 221, 255, 0.6);
+      z-index: 1;
+    }
+
+    /* Center black circle with button */
+    .black-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      background: rgb(185, 156, 156);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .blue-button {
+      width: 200px;
+      height: 200px;
+      background-color: #000000;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .blue-button:active {
+      transform: scale(0.95);
+    }
+
+    .line {
+      position: absolute;
+      width: 110px;
+      height: 3px;
+      background-color: #9df;
+      box-shadow: 0 0 32px #9df, 0 0 24px #9df;
+      z-index: 1;
+    }
+
+    .line-long {
+      position: absolute;
+      width: 150px;
+      height: 2px;
+      background-color: #9df;
+      box-shadow: 0 0 32px #9df, 0 0 24px #9df;
+      z-index: 1;
+    }
+
+    .line-longer {
+      position: absolute;
+      width: 179px;
+      height: 2px;
+      background-color: #9df;
+      box-shadow: 0 0 32px #9df, 0 0 24px #9df;
+      z-index: 1;
+    }
+
+    .line-short {
+      position: absolute;
+      width: 90px;
+      height: 3px;
+      background-color: #9df;
+      box-shadow: 0 0 32px #9df, 0 0 24px #9df;
+      z-index: 1;
+    }
+
+    .line-shortest {
+      position: absolute;
+      width: 60px;
+      height: 3px;
+      background-color: #9df;
+      box-shadow: 0 0 32px #9df, 0 0 24px #9df;
+      z-index: 1;
+    }
+
+    /* App squares with rounded corners */
+    .app-circle {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 40px; /* Rounded square instead of circle */
+      background: rgba(255, 255, 255, 0.9);
+      border: 2px solid #9df;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      transition: all 0.2s;
+      z-index: 2;
+      box-shadow: 0 0 15px rgba(153, 221, 255, 0.5);
+    }
+
+    .app-circle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(153, 221, 255, 0.8);
+    }
+
+    .app-circle img {
+      width: 110px;
+      height: 110px;
+      border-radius: 20px; /* Rounded corners for images too */
+    }
+
+    /* Blur overlay for voice assistant */
+    .blur-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+      display: none;
+      z-index: 4;
+    }
+
+    .clock-small {
+      position: absolute;
+      top: 425px;
+      left: 670px;
+      color: #797979;
+      font-size: 10px;
+      font-family: monospace;
+      z-index: 10;
+      width: 160px;
+      text-align: center;
+      text-shadow: 0 0 5px #363636;
+    }
+
+    .JV {
+      position: absolute;
+      top: 605px;
+      left: 270px;
+      color: #797979;
+      font-size: 10px;
+      font-family: monospace;
+      z-index: 10;
+      width: 150px;
+      text-align: center;
+      text-shadow: 0 0 5px #363636;
+    }
+
+    .V {
+      position: absolute;
+      top: 585px;
+      left: 270px;
+      color: #797979;
+      font-size: 10px;
+      font-family: monospace;
+      z-index: 10;
+      width: 150px;
+      text-align: center;
+      text-shadow: 0 0 5px #363636;
+    }
+
+    .J {
+      position: absolute;
+      top: 407px;
+      left: 210px;
+      color: #797979;
+      font-size: 10px;
+      font-family: monospace;
+      z-index: 10;
+      width: 150px;
+      text-align: center;
+      text-shadow: 0 0 5px #363636;
+    }
+
+    .text-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 24px;
+      text-align: center;
+      max-width: 80%;
+      line-height: 1.4;
+      z-index: 5;
+    }
+
+    /* Gradient ring effect */
+    .gradient-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1080px;
+      height: 1080px;
+      border-radius: 50%;
+      background: radial-gradient(circle, transparent 40%, rgba(173, 216, 230, 0.3) 70%, transparent 100%);
+      display: none;
+      z-index: 4;
+    }
+
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.02);
+        opacity: 0.95;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .hidden{
+      display: none;
+    }
+
+    .circle {
+      position: absolute;
+      width: 310px;
+      height: 310px;
+      border: 2px solid #9df;
+      border-radius: 100%;
+      top: 380px;
+      left: 380px;
+      z-index: 1;
+      box-shadow: 0 0 20px #9df;
+      overflow: hidden;
+      transition: box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out;
+      cursor: pointer;
+    }
+
+    .circle:hover {
+      box-shadow: 0 0 30px #9df, 0 0 60px rgba(153, 221, 255, 0.7);
+      border-color: white;
+    }
+
+    .circle-highlight {
+      box-shadow: 0 0 30px #9df, 0 0 60px rgba(153, 221, 255, 0.7);
+      border-color: white;
+    }
+
+    .circle.active {
+      position: relative;
+      border-color: #fff;
+      box-shadow: 0 0 40px #9df, 0 0 80px rgba(153, 221, 255, 0.8);
+    }
+
+    /* New styles for audio bars */
+    .audio-bars-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: flex-end;
+      height: 80%;
+      width: 80%;
+      justify-content: space-between;
+    }
+
+    .audio-bar {
+      width: 4px; /* Adjust bar width as needed */
+      background-color: #9df;
+      margin: 0 2px;
+      border-radius: 2px;
+      opacity: 0.8;
+      animation: bar-pulse 1s infinite alternate;
+    }
+
+    @keyframes bar-pulse {
+      0% { transform: scaleY(0.2); }
+      50% { transform: scaleY(1); }
+      100% { transform: scaleY(0.4); }
+    }
+
+    /* Ensure only active state has the animation */
+    .circle:not(.active) .audio-bar {
+      animation: none;
+      height: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Background elements -->
+    <div class="lightblue-circle"></div>
+    <div class="gradient-ring" id="gradientRing"></div>
+    
+    <!-- App circles (8 total, positioned like your pygame version) -->
+    <div class="app-circle" id="app1" data-app="1">App 1</div>
+    <div class="app-circle" id="app2" data-app="2">App 2</div>
+    <div class="app-circle" id="app3" data-app="3">App 3</div>
+    <div class="app-circle" id="app4" data-app="4">App 4</div>
+    <div class="app-circle" id="app5" data-app="5">App 5</div>
+    <div class="app-circle" id="app6" data-app="6">App 6</div>
+    <div class="app-circle" id="app7" data-app="7">App 7</div>
+    <div class="app-circle" id="app8" data-app="8">App 8</div>
+
+    <!-- Small Text -->
+    <div class="JV">V 0.2.7</div>
+    <div class="V">JARVIS</div>
+    <div class="J">• ONLINE</div>
+    <div class="clock-small" data-time=""></div>
+
+    <!-- Center control -->
+    <!--<div class="black-circle"> -->
+    <!---  <button class="blue-button" onclick="activateJarvis()"></button> -->
+   <!-- </div> -->
+
+    <!-- Circle -->
+    <div class="circle" onclick="activateJarvis()">
+      <div class="audio-bars-container" id="audioBars"></div>
+    </div>
+
+
+        <!--circut lines-->
+      <div id="left-lines">
+        <div class="line-longer" style="top: 420px; left: 253px;"></div> <!--initially 100, 50, use for conversion of other lines-->
+        <div class="line" style="top: 526px; left: 270.6px;"></div> 
+        <div class="line" style="top: 600px; left: 285px;"></div>
+        <div class="line" style="top: 675px; left: 357px;"></div> 
+        <div class="line-short" style="top: 490px; left: 297px;"></div> <!-- 100 -->
+      </div>
+      <div id="right-lines">
+        <div class="line-longer" style="top: 440px; left: 659.8px;"></div> <!-- - 159-->
+        <div class="line-shortest" style="top: 579px; left: 687px;"></div> 
+        <div class="line-longer" style="top: 650px; left: 644px;"></div> <!-- 100 -->
+        <div class="line" style="top: 510px; left: 691px;"></div>
+      </div>
+    
+    <!-- Voice assistant overlay -->
+    <div class="blur-overlay" id="blurOverlay">
+      <div class="text-display" id="textDisplay"></div>
+    </div>
+  </div>
+
+  <script>
+    // Position app circles in a ring (like your pygame create_circles function)
+    function positionAppCircles() {
+      const numCircles = 8;
+      const angleStep = 360 / numCircles;
+      const centerX = 520; // Half of 1080px
+      const centerY = 520;
+      const radius = 1080 / 2.75; // Similar to your pygame calculation
+      const clockSmall = document.querySelector('.clock-small');
+
+      
+      for (let i = 0; i < numCircles; i++) {
+        const angle = (angleStep * i) * Math.PI / 180;
+        const x = centerX + radius * Math.cos(angle) - 70; // -70 to center the 140px circle
+        const y = centerY + radius * Math.sin(angle) - 70;
+        
+        const appCircle = document.getElementById(`app${i + 1}`);
+        appCircle.style.left = `${x}px`;
+        appCircle.style.top = `${y}px`;
+      }
+    }
+
+    // Initialize app positions
+    positionAppCircles();
+
+    // App click handlers
+    document.querySelectorAll('.app-circle').forEach(circle => {
+      circle.addEventListener('click', function() {
+        const appIndex = this.dataset.app;
+        console.log(`Launching App ${appIndex}`);
+        // Here you would implement app launching logic
+        alert(`Launching App ${appIndex}`);
+      });
+    });
+
+
+
+    // Voice assistant functionality
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+
+    const speak = (text) => {
+      fetch("https://api.elevenlabs.io/v1/text-to-speech/UEKYgullGqaF0keqT8Bu", {
+        method: "POST",
+        headers: {
+          "xi-api-key": "sk_9440bc2a714e5a69044e66ff5b2afb46f646d86774c06b61",
+          "Content-Type": "application/json",
+          "Accept": "audio/mpeg"
+        },
+        body: JSON.stringify({
+          text: text,
+          voice_settings: {
+            stability: 0.9,
+            similarity_boost: 0.75
+          }
+        })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.blob();
+      })
+      .then(blob => {
+        const audio = new Audio(URL.createObjectURL(blob));
+        audio.play();
+        audio.onended = () => {
+          recognition.start();
+        };
+      })
+      .catch(err => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.onend = () => {
+          recognition.start();
+        };
+        speechSynthesis.speak(utterance);
+      });
+    };
+
+    // Show blur effect and text (like your apply_blur_ring_and_text function)
+    function showTextOverlay(text) {
+      const overlay = document.getElementById('blurOverlay');
+      const textDisplay = document.getElementById('textDisplay');
+      const gradientRing = document.getElementById('gradientRing');
+      
+      textDisplay.textContent = text;
+      overlay.style.display = 'block';
+      gradientRing.style.display = 'block';
+    }
+
+    function hideTextOverlay() {
+      const overlay = document.getElementById('blurOverlay');
+      const gradientRing = document.getElementById('gradientRing');
+      
+      overlay.style.display = 'none';
+      gradientRing.style.display = 'none';
+    }
+
+    recognition.onresult = (event) => {
+      const userInput = event.results[0][0].transcript;
+      console.log("User said:", userInput);
+      
+      // Show user query
+      showTextOverlay(userInput);
+      
+      const auth = btoa("admin:canes27");
+
+      fetch("https://atimmeny.app.n8n.cloud/webhook/n8n", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Basic ${auth}`
+        },
+        body: JSON.stringify({ query: userInput })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const text = (data[0] && data[0].output) || data.output || data.voice_output || "Sorry, I didn't understand that.";
+        
+        // Show response
+        showTextOverlay(text);
+        speak(text);
+        
+        // Hide overlay after delay
+        setTimeout(() => {
+          hideTextOverlay();
+        }, 3000);
+      })
+      .catch(err => {
+        console.error(err);
+        hideTextOverlay();
+      });
+    };
+
+    let isVoiceAgentActive = false;
+
+    function activateJarvis() {
+      const circle = document.querySelector('.circle');
+      const barsContainer = document.getElementById('audioBars');
+
+      isVoiceAgentActive = !isVoiceAgentActive;
+
+      if (isVoiceAgentActive) {
+        circle.classList.add('active');
+
+        // Add bars
+        barsContainer.innerHTML = ''; // Clear old bars
+        for (let i = 0; i < 40; i++) {
+          const bar = document.createElement('div');
+          bar.className = 'audio-bar';
+          bar.style.animationDelay = `${Math.random() * 0.5}s`;
+          bar.style.height = `${(Math.random() * 80) + 20}%`;
+          barsContainer.appendChild(bar);
+        }
+
+        try {
+          recognition.start();
+        } catch (error) {
+          console.error('Recognition error:', error);
+        }
+
+      } else {
+        circle.classList.remove('active');
+        barsContainer.innerHTML = '';
+        recognition.stop();
+      }
+    }
+
+    // Try to load app images
+    document.querySelectorAll('.app-circle').forEach((circle, index) => {
+      const appIndex = index + 1;
+      const img = new Image();
+      img.onload = function() {
+        circle.innerHTML = '';
+        circle.appendChild(this);
+      };
+      img.onerror = function() {
+        // Keep text if image fails to load
+        console.log(`App ${appIndex} image not found, using text`);
+      };
+      img.src = `./apps/app_${appIndex}/app_${appIndex}.png`;
+    });
+
+    function updateClock() {
+    const now = new Date();
+    const clockSmall = document.querySelector('.clock-small');
+    const dateString = now.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const timeString = now.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit', 
+      hour12: true 
+    });
+    const fullString = `${dateString} ${timeString}`;
+    
+    // Update the small clock
+    if (clockSmall) {
+      clockSmall.textContent = fullString;
+    }
+  }
+
+  // Update clock immediately and then every second
+  updateClock();
+  setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
