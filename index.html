@@ -11,11 +11,11 @@
       background: rgb(0, 0, 0);
       overflow: hidden;
       font-family: 'Arial', sans-serif;
-      /* UNDO THIS cursor: none; */
+      cursor: none;
     }
 
     * {
-      /* UNDO THIS cursor: none !important; */
+      cursor: none !important;
     }
 
     .container {
@@ -428,7 +428,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 1400px;
+    width: 1080px;
     height: 1000px;
     background: #000;
     display: none;
@@ -447,7 +447,7 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-40%, -46%);
+    transform: translate(-50%, -46%);
   }
 
   .command-button {
@@ -517,7 +517,7 @@
   width: 1040px; height: 1040px;
   background: #000;
   display: none;
-  z-index: 100;
+  z-index: 200;
   padding: 40px;
   box-sizing: border-box;
   color: white;
@@ -527,14 +527,15 @@
   .voice-container {
     max-width: 800px;
     margin: 0 auto;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
+    padding: 20px;
+    background: rgba(0,0,0,0.8);
+    border-radius: 10px;
+    border: 1px solid #9df;
   }
 
   .voice-container button {
-    position: fixed;
+    position: relative;
     padding: 12px 24px;
     background: #9df;
     color: #000;
@@ -544,21 +545,12 @@
     cursor: pointer;
     transition: all 0.3s;
     font-size: 16px;
+    margin: 10px;
   }
 
   .voice-container button:hover {
     background: #7bc;
     transform: scale(1.05);
-  }
-
-  .voice-container button:first-of-type {
-    top: -450px;
-    left: -200px;
-  }
-
-  .voice-container button:last-of-type {
-    top: -450px;
-    right: -90px;
   }
 
   .notes-list {
@@ -573,6 +565,23 @@
     margin: 5px 0;
     padding: 10px;
     border: 1px solid #9df;
+  }
+
+  .notes-list button {
+    background: #9df;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin: 0 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+  }
+
+  .notes-list button:hover {
+    background: #7bc;
+    transform: scale(1.1);
   }
 
   /* Voice Notes App buttons Done */
@@ -835,7 +844,7 @@
   .sports-app {
     position: absolute;
     top: 20px; left: 20px;
-    width: 1540px; height: 1540px;
+    width: 1080px; height: 1540px;
     background: #0a0a0a;
     display: none;
     z-index: 100;
@@ -1103,9 +1112,9 @@
   /* Weather App */
   .weather-app {
     position: absolute;
-    top: 50%;
+    top: 40%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -40%);
     width: 1340px; height: 1340px;
     background: linear-gradient(135deg, #5b5b5b 0%, #b3b3b3 100%);
     display: none;
@@ -1121,10 +1130,10 @@
     max-width: 900px;
     margin: 0 auto;
     padding: 20px;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0);
     border-radius: 20px;
     backdrop-filter: blur(15px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.0);
   }
 
   .weather-header {
@@ -1865,9 +1874,11 @@
 
   .map-container {
     position: absolute;
-    top: 50%;
+    top: 80%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, 20%);
+    width: 800px;
+    height: 500px;
     background: #a2a3a6;
     border-radius: 15px;
     overflow: hidden;
@@ -2677,10 +2688,32 @@
   // Command Board App Functions
   function openCommandApp() {
     document.getElementById('commandApp').style.display = 'block';
+    
+    // Add black box with z-index 4
+    const blackBox = document.createElement('div');
+    blackBox.id = 'commandAppBlackBox';
+    blackBox.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 2000px;
+      background-color: black;
+      z-index: 4;
+      border-radius: 10px;
+    `;
+    document.body.appendChild(blackBox);
   }
 
   function closeCommandApp() {
     document.getElementById('commandApp').style.display = 'none';
+    
+    // Remove black box when closing command app
+    const blackBox = document.getElementById('commandAppBlackBox');
+    if (blackBox) {
+      blackBox.remove();
+    }
   }
 
   function executeCommand(command) {
@@ -2734,10 +2767,32 @@
   function openVoiceApp() {
     document.getElementById('voiceApp').style.display = 'block';
     renderVoiceNotes();
+    
+    // Add black box with z-index 2
+    const blackBox = document.createElement('div');
+    blackBox.id = 'voiceAppBlackBox';
+    blackBox.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 2000px;
+      background-color: black;
+      z-index: 4;
+      border-radius: 10px;
+    `;
+    document.body.appendChild(blackBox);
   }
 
   function closeVoiceApp() {
     document.getElementById('voiceApp').style.display = 'none';
+    
+    // Remove black box when closing voice app
+    const blackBox = document.getElementById('voiceAppBlackBox');
+    if (blackBox) {
+      blackBox.remove();
+    }
   }
 
   function startRecording() {
@@ -3122,10 +3177,32 @@
     document.getElementById('sportsApp').style.display = 'block';
     // Auto-fetch real data when app opens
     fetchSportsData();
+    
+    // Add black box with z-index 4
+    const blackBox = document.createElement('div');
+    blackBox.id = 'sportsAppBlackBox';
+    blackBox.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 2000px;
+      background-color: black;
+      z-index: 4;
+      border-radius: 10px;
+    `;
+    document.body.appendChild(blackBox);
   }
 
   function closeSportsApp() {
     document.getElementById('sportsApp').style.display = 'none';
+    
+    // Remove black box when closing sports app
+    const blackBox = document.getElementById('sportsAppBlackBox');
+    if (blackBox) {
+      blackBox.remove();
+    }
   }
 
   function switchSport(sport) {
