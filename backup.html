@@ -1,0 +1,5384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>JARVIS Home Screen</title>
+  
+  <!-- !ADD! CONFIGURATION REQUIRED -->
+  <!-- 
+    Before using this JARVIS Home Screen, you need to configure the following:
+    
+    1. API Keys (see comments below for each service)
+    2. Location settings
+    3. Stock portfolio data
+    4. Light control commands
+    5. Webhook endpoints
+    
+    Search for "!ADD!" throughout this file to find all required configurations.
+  -->
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: rgb(0, 0, 0);
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+      cursor: none;
+    }
+
+    * {
+      cursor: none !important;
+    }
+
+    .container {
+      position: relative;
+      width: 1080px;
+      height: 1080px;
+      margin: 0 auto;
+      background-image: url('./resources/background.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* Outer glowing ring */
+    .lightblue-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1040px;
+      height: 1040px;
+      border: 2px solid #9df;
+      background-color: transparent;
+      border-radius: 50%;
+      box-shadow: 0 0 30px #9df, 0 0 60px rgba(153, 221, 255, 0.6);
+      z-index: 1;
+    }
+
+    /* Center black circle with button */
+    .black-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      background: rgb(185, 156, 156);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .blue-button {
+      width: 200px;
+      height: 200px;
+      background-color: #000000;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .blue-button:active {
+      transform: scale(0.95);
+    }
+
+    .line {
+      position: absolute;
+      width: 110px;
+      height: 3px;
+      background-color: #9df;
+      box-shadow: 0 0 32px #9df, 0 0 24px #9df;
+      z-index: 1;
+    }
+
+    .line-long {
+      position: absolute;
+      width: 150px;
+      height: 2px;
+      background-color: #9df;
+      box-shadow: 0 0 32px #9df, 0 0 24px #9df;
+      z-index: 1;
+    }
+
+    .line-longer {
+      position: absolute;
+      width: 179px;
+      height: 2px;
+      background-color: #9df;
+      box-shadow: 0 0 32px #9df, 0 0 24px #9df;
+      z-index: 1;
+    }
+
+    .line-short {
+      position: absolute;
+      width: 90px;
+      height: 3px;
+      background-color: #9df;
+      box-shadow: 0 0 32px #9df, 0 0 24px #9df;
+      z-index: 1;
+    }
+
+    .line-shortest {
+      position: absolute;
+      width: 60px;
+      height: 3px;
+      background-color: #9df;
+      box-shadow: 0 0 32px #9df, 0 0 24px #9df;
+      z-index: 1;
+    }
+
+    /* App squares with rounded corners */
+    .app-circle {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      border-radius: 30px; /* Rounded square instead of circle */
+      background: rgba(255, 255, 255, 0);
+      border: 2px solid #9df;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+      transition: all 0.2s;
+      z-index: 2;
+      box-shadow: 0 0 15px rgba(153, 221, 255, 0.5);
+    }
+
+    .app-circle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(153, 221, 255, 0.8);
+    }
+
+    .app-circle img {
+      width: 130px;
+      height: 130px;
+      border-radius: 15px; /* Rounded corners for images too */
+    }
+
+    /* Blur overlay for voice assistant */
+    .blur-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+      display: none;
+      z-index: 4;
+    }
+
+    .clock-small {
+      position: absolute;
+      top: 425px;
+      left: 670px;
+      color: #797979;
+      font-size: 10px;
+      font-family: monospace;
+      z-index: 10;
+      width: 160px;
+      text-align: center;
+      text-shadow: 0 0 5px #363636;
+    }
+
+    .JV {
+      position: absolute;
+      top: 605px;
+      left: 270px;
+      color: #797979;
+      font-size: 10px;
+      font-family: monospace;
+      z-index: 10;
+      width: 150px;
+      text-align: center;
+      text-shadow: 0 0 5px #363636;
+    }
+
+    .V {
+      position: absolute;
+      top: 585px;
+      left: 270px;
+      color: #797979;
+      font-size: 10px;
+      font-family: monospace;
+      z-index: 10;
+      width: 150px;
+      text-align: center;
+      text-shadow: 0 0 5px #363636;
+    }
+
+    .J {
+      position: absolute;
+      top: 407px;
+      left: 210px;
+      color: #797979;
+      font-size: 10px;
+      font-family: monospace;
+      z-index: 10;
+      width: 150px;
+      text-align: center;
+      text-shadow: 0 0 5px #363636;
+    }
+
+    .text-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 24px;
+      text-align: center;
+      max-width: 80%;
+      line-height: 1.4;
+      z-index: 5;
+    }
+
+    /* Gradient ring effect */
+    .gradient-ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1080px;
+      height: 1080px;
+      border-radius: 50%;
+      background: radial-gradient(circle, transparent 40%, rgba(173, 216, 230, 0.3) 70%, transparent 100%);
+      display: none;
+      z-index: 4;
+    }
+
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.02);
+        opacity: 0.95;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .hidden{
+      display: none;
+    }
+
+    .circle {
+      position: absolute;
+      width: 310px;
+      height: 310px;
+      border: 2px solid #9df;
+      border-radius: 100%;
+      top: 380px;
+      left: 380px;
+      z-index: 1;
+      box-shadow: 0 0 20px #9df;
+      overflow: hidden;
+      transition: box-shadow 0.3s ease-in-out, border-color 0.3s ease-in-out;
+      cursor: pointer;
+    }
+
+    .circle:hover {
+      box-shadow: 0 0 30px #9df, 0 0 60px rgba(153, 221, 255, 0.7);
+      border-color: white;
+    }
+
+    .circle-highlight {
+      box-shadow: 0 0 30px #9df, 0 0 60px rgba(153, 221, 255, 0.7);
+      border-color: white;
+    }
+
+    .circle.active {
+      position: relative;
+      border-color: #fff;
+      box-shadow: 0 0 40px #9df, 0 0 80px rgba(153, 221, 255, 0.8);
+    }
+
+    /* New styles for audio bars */
+    .audio-bars-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: flex-end;
+      height: 80%;
+      width: 80%;
+      justify-content: space-between;
+    }
+
+    .audio-bar {
+      width: 4px; /* Adjust bar width as needed */
+      background-color: #9df;
+      margin: 0 2px;
+      border-radius: 2px;
+      opacity: 0.8;
+      animation: bar-pulse 1s infinite alternate;
+    }
+
+    @keyframes bar-pulse {
+      0% { transform: scaleY(0.2); }
+      50% { transform: scaleY(1); }
+      100% { transform: scaleY(0.4); }
+    }
+
+    /* Ensure only active state has the animation */
+    .circle:not(.active) .audio-bar {
+      animation: none;
+      height: 0;
+    }
+
+ /* Sleep Clock App */
+  .sleep-app {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1080px;
+    height: 1080px;
+    background: #000;
+    display: none;
+    z-index: 100;
+  }
+
+  .analog-clock {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 864px;
+    height: 864px;
+    border: 2px solid rgba(255, 0, 0, 0.2);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,0,0,0.9) 0%, rgba(0,0,0,1) 100%);
+  }
+
+  .clock-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 12px;
+    background: rgba(255, 0, 0, 0.4);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+  }
+
+  .hour-hand {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 180px;
+    background: rgba(255, 0, 0, 0.3);
+    transform-origin: bottom center;
+    transform: translate(-50%, -100%);
+    border-radius: 3px;
+    z-index: 4;
+  }
+
+  .minute-hand {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 240px;
+    background: rgba(255, 0, 0, 0.4);
+    transform-origin: bottom center;
+    transform: translate(-50%, -100%);
+    border-radius: 2px;
+    z-index: 3;
+  }
+
+  .second-hand {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2px;
+    height: 280px;
+    background: rgba(255, 0, 0, 0.2);
+    transform-origin: bottom center;
+    transform: translate(-50%, -100%);
+    z-index: 2;
+  }
+
+  .hour-numbers {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hour-number {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    color: rgba(255, 0, 0, 0.4);
+    font-size: 32px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: 20px 402px;
+    transform: translateX(-50%);
+  }
+  /* END SLEEP CLOCK APP */
+
+  /* Command Board App */
+  .command-app {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1080px;
+    height: 1000px;
+    background: #000;
+    display: none;
+    z-index: 100;
+    padding: 40px;
+    box-sizing: border-box;
+  }
+
+  .command-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(4, 1fr); /* Changed from 3 to 4 rows */
+    gap: 15px; /* Reduced gap slightly */
+    height: 70%; /* Changed from 50% to 100% */
+    width: 70%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -46%);
+  }
+
+  .command-button {
+    background: rgba(153, 221, 255, 0.1);
+    border: 2px solid rgba(153, 221, 255, 0.3);
+    border-radius: 10px;
+    color: rgba(153, 221, 255, 0.8);
+    font-size: 16px; /* Reduced from 18px */
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    text-align: center;
+    padding: 35px; /* Reduced from 20px */
+    position: relative;
+    overflow: hidden;
+  }
+
+  .command-button:hover {
+    background: rgba(153, 221, 255, 0.2);
+    border-color: rgba(153, 221, 255, 0.6);
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(153, 221, 255, 0.4);
+  }
+
+  .command-button:active {
+    transform: scale(0.95);
+  }
+
+  .command-icon {
+    font-size: 30px; /* Reduced from 36px */
+    margin-bottom: 8px; /* Reduced from 10px */
+  }
+
+  .command-text {
+    font-size: 14px; /* Reduced from 16px */
+    line-height: 1.2;
+  }
+
+  .command-button.executing {
+    background: rgba(255, 255, 0, 0.2);
+    border-color: rgba(255, 255, 0, 0.6);
+    color: rgba(255, 255, 0, 0.9);
+  }
+
+  .command-button.success {
+    background: rgba(0, 255, 0, 0.2);
+    border-color: rgba(0, 255, 0, 0.6);
+    color: rgba(0, 255, 0, 0.9);
+  }
+
+  .command-button.error {
+    background: rgba(255, 0, 0, 0.2);
+    border-color: rgba(255, 0, 0, 0.6);
+    color: rgba(255, 0, 0, 0.9);
+  }
+
+  /* END Command Board App */
+
+  /* Voice Notes App */
+
+  .voice-app {
+  position: absolute;
+  top: 40px; left: 40px;
+  width: 1040px; height: 1040px;
+  background: #000;
+  display: none;
+  z-index: 200;
+  padding: 40px;
+  box-sizing: border-box;
+  color: white;
+  overflow-y: auto;
+  }
+
+  .voice-container {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    padding: 20px;
+    background: rgba(0,0,0,0.8);
+    border-radius: 10px;
+    border: 1px solid #9df;
+  }
+
+  .voice-container button {
+    position: relative;
+    padding: 12px 24px;
+    background: #9df;
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 16px;
+    margin: 10px;
+  }
+
+  .voice-container button:hover {
+    background: #7bc;
+    transform: scale(1.05);
+  }
+
+  .notes-list {
+    margin-bottom: 20px;
+  }
+
+  .notes-list div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255,255,255,0.05);
+    margin: 5px 0;
+    padding: 10px;
+    border: 1px solid #9df;
+  }
+
+  .notes-list button {
+    background: #9df;
+    color: #000;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 12px;
+    margin: 0 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.3s;
+  }
+
+  .notes-list button:hover {
+    background: #7bc;
+    transform: scale(1.1);
+  }
+
+  /* Voice Notes App buttons Done */
+
+  /* Stock Jarvis Circle */
+
+
+  .stocks-app {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1340px;
+  height: 1340px;
+  background: #0a0a0a;
+  display: none;
+  z-index: 100;
+  padding: 40px;
+  box-sizing: border-box;
+  color: #e0e0e0;
+  overflow-y: auto;
+  font-family: "SF Pro Display", sans-serif;
+  }
+
+  .stocks-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px;
+    background: #111;
+    border-radius: 12px;
+    box-shadow: 0 0 30px #00ffff44;
+  }
+
+  .stocks-container h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #9df;
+  }
+
+  #stocksContent div {
+    background: #1b1b1b;
+    border: 1px solid #00bcd4;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    font-size: 18px;
+  }
+
+  #stocksContent strong {
+    color: #fff;
+  }
+
+  .stocks-container button {
+    display: inline-block;
+    background: #00bcd4;
+    color: black;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .stocks-container button:hover {
+    background: #00a2b5;
+  }
+
+  .mini-stock-circle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid #9df;
+  background: radial-gradient(circle, #000 50%, #1a1a1a 100%);
+  box-shadow: 0 0 15px #9df;
+  z-index: 20;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  }
+
+  .mini-stock-circle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 25px #9df;
+  }
+
+  /* Enhanced Stock Controls */
+  .stock-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .stock-controls button {
+    background: #00bcd4;
+    color: black;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    font-size: 14px;
+  }
+
+  .stock-controls button:hover {
+    background: #00a2b5;
+  }
+
+  /* Stock Selector */
+  .stock-selector {
+    margin-bottom: 20px;
+  }
+
+  .stock-selector select {
+    width: 100%;
+    padding: 12px;
+    background: #1b1b1b;
+    border: 1px solid #00bcd4;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .stock-selector select:focus {
+    outline: none;
+    border-color: #9df;
+    box-shadow: 0 0 10px rgba(153, 221, 255, 0.3);
+  }
+
+  /* Stock Data Cards */
+  .stock-card {
+    background: #1b1b1b;
+    border: 1px solid #00bcd4;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+  }
+
+  .stock-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stock-price {
+    font-size: 24px;
+    font-weight: bold;
+    color: #fff;
+  }
+
+  .stock-change {
+    font-size: 18px;
+    font-weight: bold;
+  }
+
+  .stock-change.positive {
+    color: #4caf50;
+  }
+
+  .stock-change.negative {
+    color: #f44336;
+  }
+
+  .stock-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 14px;
+    color: #ccc;
+  }
+
+  .stock-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .stock-actions button {
+    background: #333;
+    color: #fff;
+    padding: 8px 12px;
+    border: 1px solid #00bcd4;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s ease;
+  }
+
+  .stock-actions button:hover {
+    background: #00bcd4;
+    color: black;
+  }
+
+  /* Chart Container */
+  .chart-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    height: 80%;
+    background: #0a0a0a;
+    border: 2px solid #00bcd4;
+    border-radius: 12px;
+    z-index: 1000;
+    padding: 20px;
+    box-shadow: 0 0 50px rgba(0, 188, 212, 0.5);
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333;
+  }
+
+  .chart-header h3 {
+    color: #9df;
+    margin: 0;
+  }
+
+  .close-chart-btn {
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .close-chart-btn:hover {
+    background: #d32f2f;
+  }
+
+  #tradingChart {
+    width: 100%;
+    height: calc(100% - 60px);
+    background: #1b1b1b;
+    border-radius: 8px;
+  }
+
+  /* Stock Jarvis Circle End */
+
+  /* Sports App */
+  .sports-app {
+    position: absolute;
+    top: 80px; left: 20px;
+    width: 1080px; height: 1540px;
+    background: #0a0a0a;
+    display: none;
+    z-index: 100;
+    padding: 40px;
+    box-sizing: border-box;
+    color: #e0e0e0;
+    overflow-y: auto;
+    font-family: "SF Pro Display", sans-serif;
+  }
+
+  .sports-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 30px;
+    background: #111;
+    border-radius: 12px;
+    box-shadow: 0 0 30px #00ffff44;
+  }
+
+  .sports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #9df;
+  }
+
+  .sports-header h2 {
+    font-size: 20px;
+    margin: 0;
+  }
+
+  .sport-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    justify-content: center;
+  }
+
+  .sport-tab {
+    padding: 6px 12px;
+    background: rgba(153, 221, 255, 0.1);
+    border: 1px solid #9df;
+    border-radius: 6px;
+    color: #9df;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 12px;
+  }
+
+  .sport-tab.active {
+    background: rgba(153, 221, 255, 0.3);
+    box-shadow: 0 0 10px #9df;
+  }
+
+  .sport-tab:hover {
+    background: rgba(153, 221, 255, 0.2);
+  }
+
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-rows: repeat(3, 1fr);
+    gap: 12px;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .game-card {
+    background: #1b1b1b;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 12px;
+    transition: all 0.3s;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .game-card {
+    background: #1b1b1b;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s;
+  }
+
+  .game-card:hover {
+    border-color: #9df;
+    box-shadow: 0 0 15px rgba(153, 221, 255, 0.3);
+  }
+
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #999;
+  }
+
+  .game-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+  }
+
+  .status-live {
+    background: #ff4444;
+    color: white;
+  }
+
+  .status-final {
+    background: #444;
+    color: #ccc;
+  }
+
+  .status-scheduled {
+    background: #4444ff;
+    color: white;
+  }
+
+  .teams-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .team {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .team-name {
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  .team-score {
+    font-size: 24px;
+    font-weight: bold;
+    color: #9df;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .vs {
+    font-size: 14px;
+    color: #666;
+    margin: 0 20px;
+  }
+
+  .game-details {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #999;
+  }
+
+  .player-props {
+    background: #222;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+  }
+
+  .prop-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 11px;
+  }
+
+  .refresh-btn {
+    background: #9df;
+    color: #000;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    font-size: 12px;
+  }
+
+  .refresh-btn:hover {
+    background: #7bc;
+    box-shadow: 0 0 10px #9df;
+  }
+
+  .loading {
+    text-align: center;
+    color: #9df;
+    font-size: 18px;
+  }
+
+  .league-leaders {
+    background: #1b1b1b;
+    border: 1px solid #9df;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 15px;
+    box-shadow: 0 0 15px rgba(153, 221, 255, 0.3);
+  }
+
+  .league-leaders h3 {
+    color: #9df;
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    text-align: center;
+  }
+
+  .leaders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+  }
+
+  .leader-category {
+    background: #222;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 10px;
+  }
+
+  .leader-category h4 {
+    color: #9df;
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .leader-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+    font-size: 12px;
+  }
+
+  .leader-rank {
+    color: #999;
+    font-weight: bold;
+    min-width: 20px;
+  }
+
+  .leader-name {
+    color: #fff;
+    flex: 1;
+    margin: 0 8px;
+  }
+
+  .leader-stat {
+    color: #9df;
+    font-weight: bold;
+  }
+
+  /* END Sports App */
+
+  /* Weather App */
+  .weather-app {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -38%);
+    width: 1340px; height: 1340px;
+    background: linear-gradient(135deg, #5b5b5b 0%, #b3b3b3 100%);
+    display: none;
+    z-index: 100;
+    padding: 20px;
+    box-sizing: border-box;
+    color: white;
+    overflow-y: auto;
+    font-family: "SF Pro Display", sans-serif;
+  }
+
+  .weather-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0);
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.0);
+  }
+
+  .weather-header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  .weather-location {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #fff;
+  }
+
+  .weather-date {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .current-weather {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+  }
+
+  .weather-main {
+    text-align: center;
+    flex: 1;
+  }
+
+  .weather-temp {
+    font-size: 48px;
+    font-weight: 300;
+    margin-bottom: 3px;
+    color: #fff;
+  }
+
+  .weather-description {
+    font-size: 14px;
+    text-transform: capitalize;
+    margin-bottom: 6px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .weather-feels-like {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .weather-icon {
+    font-size: 56px;
+    margin-bottom: 8px;
+  }
+
+  .hourly-forecast {
+    margin-bottom: 25px;
+  }
+
+  .hourly-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .hourly-grid {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .hourly-item {
+    text-align: center;
+    flex: 1;
+  }
+
+  .hourly-time {
+    font-size: 10px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .hourly-icon {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .hourly-temp {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .weekly-forecast {
+    margin-top: 20px;
+  }
+
+  .weekly-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .weekly-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .weekly-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .weekly-day {
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    min-width: 50px;
+  }
+
+  .weekly-icon {
+    font-size: 16px;
+    margin: 0 12px;
+  }
+
+  .weekly-temps {
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+  }
+
+  .refresh-weather-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 10px;
+    transition: all 0.3s;
+    margin-top: 15px;
+  }
+
+  .refresh-weather-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+  }
+
+  /* END Weather App */
+
+  /* Podcasts/Music App */
+  .podcasts-app {
+    position: absolute;
+    top: 20px; left: 20px;
+    width: 1040px; height: 1040px;
+    background: linear-gradient(135deg, #1db954 0%, #191414 50%, #1ed760 100%);
+    display: none;
+    z-index: 100;
+    padding: 20px;
+    box-sizing: border-box;
+    color: white;
+    overflow-y: auto;
+    font-family: "SF Pro Display", sans-serif;
+  }
+
+  .podcasts-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .podcasts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(29, 185, 84, 0.5);
+  }
+
+  .podcasts-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .podcast-tab {
+    padding: 8px 16px;
+    background: rgba(29, 185, 84, 0.1);
+    border: 1px solid rgba(29, 185, 84, 0.3);
+    border-radius: 20px;
+    color: #1db954;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .podcast-tab.active {
+    background: rgba(29, 185, 84, 0.3);
+    box-shadow: 0 0 15px rgba(29, 185, 84, 0.4);
+  }
+
+  .podcast-tab:hover {
+    background: rgba(29, 185, 84, 0.2);
+    transform: scale(1.05);
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .content-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .content-card:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #1db954;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(29, 185, 84, 0.3);
+  }
+
+  .content-card.playing {
+    background: rgba(29, 185, 84, 0.2);
+    border-color: #1db954;
+    box-shadow: 0 0 20px rgba(29, 185, 84, 0.4);
+  }
+
+  .content-image {
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(45deg, #1db954, #1ed760);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .content-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .play-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .content-card:hover .play-overlay {
+    opacity: 1;
+  }
+
+  .content-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: #fff;
+    line-height: 1.3;
+  }
+
+  .content-artist {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 8px;
+  }
+
+  .content-duration {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .now-playing {
+    background: rgba(29, 185, 84, 0.2);
+    border: 1px solid #1db954;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+    display: none;
+    position: relative;
+  }
+
+  .now-playing.active {
+    display: block;
+  }
+
+  .album-cover-display {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px;
+    height: 900px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(29, 185, 84, 0.1) 0%, rgba(0, 0, 0, 0.8) 100%);
+    border: 3px solid rgba(29, 185, 84, 0.3);
+    box-shadow: 0 0 50px rgba(29, 185, 84, 0.4);
+    display: none;
+    z-index: 200;
+    overflow: hidden;
+    animation: albumPulse 2s ease-in-out infinite alternate;
+  }
+
+  .album-cover-display.active {
+    display: block;
+  }
+
+  .album-cover-display img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .album-cover-display .default-icon {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 200px;
+    color: rgba(29, 185, 84, 0.6);
+    background: linear-gradient(45deg, #1db954, #1ed760);
+  }
+
+  @keyframes albumPulse {
+    0% {
+      box-shadow: 0 0 50px rgba(29, 185, 84, 0.4);
+      transform: translate(-50%, -50%) scale(1);
+    }
+    100% {
+      box-shadow: 0 0 80px rgba(29, 185, 84, 0.6);
+      transform: translate(-50%, -50%) scale(1.02);
+    }
+  }
+
+  .album-cover-display .close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    z-index: 201;
+  }
+
+  .album-cover-display .close-btn:hover {
+    background: rgba(255, 0, 0, 0.7);
+    transform: scale(1.1);
+  }
+
+  .album-cover-display .track-info {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    color: white;
+    z-index: 201;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px 25px;
+    border-radius: 25px;
+    backdrop-filter: blur(10px);
+  }
+
+  .album-cover-display .track-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #1db954;
+  }
+
+  .album-cover-display .track-artist {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .now-playing-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .now-playing-title {
+    font-size: 14px;
+    color: #1db954;
+    font-weight: 600;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .control-btn {
+    background: rgba(29, 185, 84, 0.3);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: white;
+  }
+
+  .control-btn:hover {
+    background: rgba(29, 185, 84, 0.5);
+    transform: scale(1.1);
+  }
+
+  .control-btn.play-pause {
+    width: 40px;
+    height: 40px;
+    background: #1db954;
+  }
+
+  .control-btn.play-pause:hover {
+    background: #1ed760;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    margin-top: 10px;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: #1db954;
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .refresh-podcasts-btn {
+    background: rgba(29, 185, 84, 0.3);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 12px;
+    transition: all 0.3s;
+  }
+
+  .refresh-podcasts-btn:hover {
+    background: rgba(29, 185, 84, 0.5);
+    transform: scale(1.05);
+  }
+
+  .loading-podcasts {
+    text-align: center;
+    color: #1db954;
+    font-size: 18px;
+    padding: 40px;
+  }
+
+  /* Now Playing Full Screen Experience */
+  .now-playing-fullscreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px;
+    box-sizing: border-box;
+    position: relative;
+  }
+
+  .now-playing-fullscreen::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1;
+  }
+
+  .now-playing-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+  }
+
+  .track-info-banner {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    margin: 0 auto;
+    max-width: 800px;
+    border: 2px solid rgba(29, 185, 84, 0.3);
+  }
+
+  .track-title-large {
+    font-size: 48px;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 15px;
+    line-height: 1.2;
+    word-wrap: break-word;
+  }
+
+  .track-artist-large {
+    font-size: 36px;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 10px;
+  }
+
+  .track-album-large {
+    font-size: 24px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .playback-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin: 40px 0;
+  }
+
+  .control-btn-large {
+    background: rgba(29, 185, 84, 0.2);
+    border: 2px solid rgba(29, 185, 84, 0.5);
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: white;
+    font-size: 24px;
+  }
+
+  .control-btn-large:hover {
+    background: rgba(29, 185, 84, 0.4);
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(29, 185, 84, 0.6);
+  }
+
+  .control-btn-large.play-pause {
+    width: 100px;
+    height: 100px;
+    background: rgba(29, 185, 84, 0.3);
+    font-size: 32px;
+  }
+
+  .progress-bar-large {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    margin: 20px 0;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .progress-fill-large {
+    height: 100%;
+    background: linear-gradient(90deg, #1db954, #1ed760);
+    border-radius: 4px;
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .time-display {
+    display: flex;
+    justify-content: space-between;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    margin-top: 10px;
+  }
+
+  .no-track-playing {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: white;
+    text-align: center;
+  }
+
+  .no-track-playing h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+    color: #1db954;
+  }
+
+  .no-track-playing p {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  /* END Podcasts/Music App */
+
+  /* Travel Map App */
+  .travel-app {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    width: 1040px; height: 1040px;
+    box-shadow: 0 0 10px 0 #9df(0, 0, 0, 0.5);
+    background: linear-gradient(135deg, #494949 0%, #585858 100%);
+    display: none;
+    z-index: 100;
+    padding: 20px;
+    box-sizing: border-box;
+    color: white;
+    overflow-y: auto;
+    font-family: "SF Pro Display", sans-serif;
+  }
+
+  .travel-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .travel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  }
+
+  .travel-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .travel-tab {
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 20px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .travel-tab.active {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+  }
+
+  .travel-tab:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+  }
+
+  .map-container {
+    position: absolute;
+    top: 80%;
+    left: 50%;
+    transform: translate(-50%, 20%);
+    width: 800px;
+    height: 500px;
+    background: #a2a3a6;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .world-map {
+    width: 100%;
+    height: 100%;
+    background-image: url('./apps/map.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+  }
+
+  .map-marker {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #9df;
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s;
+    box-shadow: 0 0 10px #9df(255, 107, 107, 0.5);
+  }
+
+  .map-marker:hover {
+    transform: scale(1.5);
+    box-shadow: 0 0 20px #9df(255, 107, 107, 0.8);
+  }
+
+  .map-marker.visited {
+    background: #9df;
+    box-shadow: 0 0 10px 9df(81, 207, 102, 0.5);
+  }
+
+  .map-marker.visited:hover {
+    box-shadow: 0 0 20px 9df(81, 207, 102, 0.8);
+  }
+
+  .map-marker.region {
+    background: #9df;
+    box-shadow: 0 0 10px 9df(255, 212, 59, 0.5);
+  }
+
+  .map-marker.region:hover {
+    box-shadow: 0 0 20px #9df(255, 212, 59, 0.8);
+  }
+
+  .marker-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    transform: translateY(-100%);
+    margin-top: -10px;
+  }
+
+  .map-marker:hover .marker-tooltip {
+    opacity: 1;
+  }
+
+  .travel-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: 24px;
+    font-weight: bold;
+    color: #9df;
+    margin-bottom: 5px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .travel-list {
+    max-height: 300px;
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 15px;
+  }
+
+  .region-section {
+    margin-bottom: 20px;
+  }
+
+  .region-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #9df;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .location-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .location-checkbox {
+    margin-right: 10px;
+    width: 16px;
+    height: 16px;
+    accent-color: #51cf66;
+  }
+
+  .location-name {
+    flex: 1;
+    font-size: 14px;
+  }
+
+  .location-status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 10px;
+  }
+
+  .status-visited {
+    background: #9df(81, 207, 102, 0.3);
+    color: #9df;
+  }
+
+  .status-planned {
+    background: #9df(255, 107, 107, 0.3);
+    color: #9df;
+  }
+
+  .status-region {
+    background: #9df(255, 212, 59, 0.3);
+    color: #9df;
+  }
+
+  .refresh-travel-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 12px;
+    transition: all 0.3s;
+  }
+
+  .refresh-travel-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+  }
+
+  .loading-travel {
+    text-align: center;
+    color: #9df;
+    font-size: 18px;
+    padding: 40px;
+  }
+
+  /* END Travel Map App */
+
+  </style>
+  
+  <!-- TradingView Chart Library -->
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Background elements -->
+    <div class="lightblue-circle"></div>
+    <div class="gradient-ring" id="gradientRing"></div>
+    
+    <!-- App circles -->
+    <div class="app-circle" id="app1" data-app="1">Clock</div>
+    <div class="app-circle" id="app2" data-app="2">Lights</div>
+    <div class="app-circle" id="app3" data-app="3">Weather</div>
+    <div class="app-circle" id="app4" data-app="4">Travel Map</div>
+    <div class="app-circle" id="app5" data-app="5">Stocks</div>
+    <div class="app-circle" id="app6" data-app="6">Sports Scoreboard</div>
+    <div class="app-circle" id="app7" data-app="7">Podcasts / Music</div>
+    <div class="app-circle" id="app8" data-app="8">Voice Notes</div>
+
+    <!-- Small Text -->
+    <div class="JV">V 0.2.7</div>
+    <div class="V">JARVIS</div>
+    <div class="J">• ONLINE</div>
+    <div class="clock-small" data-time=""></div>
+
+
+
+    <!-- Circle -->
+    <div class="circle" onclick="activateJarvis()">
+      <div class="audio-bars-container" id="audioBars"></div>
+    </div>
+
+
+        <!--circut lines-->
+      <div id="left-lines">
+        <div class="line-longer" style="top: 420px; left: 253px;"></div> <!--initially 100, 50, use for conversion of other lines-->
+        <div class="line" style="top: 526px; left: 270.6px;"></div> 
+        <div class="line" style="top: 600px; left: 285px;"></div>
+        <div class="line" style="top: 675px; left: 357px;"></div> 
+        <div class="line-short" style="top: 490px; left: 297px;"></div> <!-- 100 -->
+      </div>
+      <div id="right-lines">
+        <div class="line-longer" style="top: 440px; left: 659.8px;"></div> <!-- - 159-->
+        <div class="line-shortest" style="top: 579px; left: 687px;"></div> 
+        <div class="line-longer" style="top: 650px; left: 644px;"></div> <!-- 100 -->
+        <div class="line" style="top: 510px; left: 691px;"></div>
+      </div>
+    
+    <!-- Voice assistant overlay -->
+    <div class="blur-overlay" id="blurOverlay">
+      <div class="text-display" id="textDisplay"></div>
+    </div>
+  </div>
+
+    <!-- Sleep Clock App -->
+    <div class="sleep-app" id="sleepApp" onclick="closeSleepApp()">
+      <div class="analog-clock" onclick="event.stopPropagation()">
+        <div class="hour-numbers" id="hourNumbers"></div>
+        <div class="hour-hand" id="hourHand"></div>
+        <div class="minute-hand" id="minuteHand"></div>
+        <div class="second-hand" id="secondHand"></div>
+        <div class="clock-center"></div>
+      </div>
+    </div>
+
+    <!-- Command Board App -->
+  <div class="command-app" id="commandApp" onclick="closeCommandApp()">
+    <div class="command-grid" onclick="event.stopPropagation()">
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+      
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+      
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+      
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+      
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+      
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+      
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+      
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+      
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+
+      <div class="command-button" onclick="executeCommand('light prompt here')">
+        <div class="command-icon"></div>
+        <div class="command-text">Room Name<br>Light Setting</div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Voice Notes App -->
+  <div class="voice-app" id="voiceApp" onclick="closeVoiceApp()">
+    <div class="voice-container" onclick="event.stopPropagation()">
+      <h2 style="color:#9df; text-align:center;">Voice Notes</h2>
+      <div id="notesList" class="notes-list"></div>
+      <button onclick="startRecording()">🎤 Record</button>
+      <button onclick="stopRecording()">⏹ Stop</button>
+    </div>
+  </div>
+
+  <!-- Stocks App -->
+  <div class="stocks-app" id="stocksApp" onclick="closeStocksApp()">
+      <div 
+      class="mini-stock-circle"
+      onclick="event.stopPropagation(); launchMiniStockJarvis();"
+      title="Stock Jarvis"
+    ></div>
+      <div class="stocks-container" onclick="event.stopPropagation()">
+      <h2 style="color:#9df; text-align:center;">📈 Stocks</h2>
+      
+      <!-- Stock Controls -->
+      <div class="stock-controls">
+        <button onclick="fetchStocks()">🔄 Refresh</button>
+      </div>
+      
+      <!-- Stock Selection -->
+      <div class="stock-selector">
+        <select id="stockDropdown" onchange="loadStockData()">
+          <option value="">Select a stock...</option>
+        </select>
+      </div>
+      
+      <!-- Stock Data Display -->
+      <div id="stocksContent">
+        <p style="text-align:center;">Loading stock data...</p>
+      </div>
+      
+      <!-- Trading Chart Container -->
+      <div id="chartContainer" class="chart-container" style="display: none;">
+        <div class="chart-header">
+          <h3 id="chartTitle">Stock Chart</h3>
+          <button onclick="closeChart()" class="close-chart-btn">✕</button>
+        </div>
+        <div id="tradingChart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sports App -->
+  <div class="sports-app" id="sportsApp" onclick="closeSportsApp()">
+    <div class="sports-container" onclick="event.stopPropagation()">
+      <div class="sports-header">
+        <h2 style="color:#9df; margin:0;">🏈 Sports Scoreboard</h2>
+        <button class="refresh-btn" onclick="refreshSports()">🔄 Refresh</button>
+      </div>
+      
+      <div class="sport-tabs">
+        <div class="sport-tab active" onclick="switchSport('all')">📅 All Games</div>
+        <div class="sport-tab" onclick="switchSport('nfl')">🏈 NFL</div>
+        <div class="sport-tab" onclick="switchSport('nhl')">🏒 NHL</div>
+        <div class="sport-tab" onclick="switchSport('mlb')">⚾ MLB</div>
+        <div class="sport-tab" onclick="switchSport('nba')">🏀 NBA</div>
+      </div>
+      
+      <div id="leagueLeaders" class="league-leaders" style="display: none;">
+        <h3>🏆 League Leaders</h3>
+        <div id="leadersContent" class="leaders-grid">
+          <div class="loading">Loading league leaders...</div>
+        </div>
+      </div>
+      
+      <div id="sportsContent">
+        <div class="loading">Loading sports data...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weather App -->
+  <div class="weather-app" id="weatherApp" onclick="closeWeatherApp()">
+    <div class="weather-container" onclick="event.stopPropagation()">
+      <div class="weather-header">
+        <h2 style="color:#fff; margin:0; text-align:center;">🌤️ Weather</h2>
+        <button class="refresh-weather-btn" onclick="refreshWeather()">🔄 Refresh</button>
+      </div>
+      
+      <div id="weatherContent">
+        <div class="loading">Loading weather data...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Podcasts/Music App -->
+  <div class="podcasts-app" id="podcastsApp" onclick="closePodcastsApp()">
+    <div class="podcasts-container" onclick="event.stopPropagation()">
+      <div class="podcasts-header">
+        <h2 style="color:#1db954; margin:0;">🎧 Podcasts / Music</h2>
+        <div style="display: flex; gap: 10px;">
+          <button class="refresh-podcasts-btn" onclick="refreshPodcasts()">🔄 Refresh</button>
+          <button class="refresh-podcasts-btn" onclick="initiateSpotifyAuth()" id="spotifyAuthBtn">🔐 Connect Spotify</button>
+        </div>
+      </div>
+      
+      <div class="podcasts-tabs">
+        <div class="podcast-tab active" onclick="switchPodcastTab('now-playing')">🎵 Now Playing</div>
+        <div class="podcast-tab" onclick="switchPodcastTab('music')">🎵 Music</div>
+        <div class="podcast-tab" onclick="switchPodcastTab('playlists')">📜 Playlists</div>
+        <div class="podcast-tab" onclick="switchPodcastTab('podcasts')">🎙️ Podcasts</div>
+        <div class="podcast-tab" onclick="switchPodcastTab('recent')">🕒 Recent</div>
+      </div>
+      
+      <div id="nowPlaying" class="now-playing">
+        <div class="now-playing-header">
+          <div class="now-playing-title">Now Playing</div>
+          <div class="controls">
+            <button class="control-btn" onclick="previousTrack()">⏮️</button>
+            <button class="control-btn play-pause" onclick="togglePlayPause()">⏸️</button>
+            <button class="control-btn" onclick="nextTrack()">⏭️</button>
+            <button class="control-btn" onclick="showAlbumCover()" title="Show Album Cover">🖼️</button>
+          </div>
+        </div>
+        <div class="progress-bar" onclick="seekTrack(event)">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+      
+      <div id="podcastsContent">
+        <div class="loading-podcasts">Loading content...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Album Cover Display -->
+  <div class="album-cover-display" id="albumCoverDisplay" onclick="hideAlbumCover()">
+    <button class="close-btn" onclick="hideAlbumCover()">✕</button>
+    <div id="albumCoverContent"></div>
+    <div class="track-info">
+      <div class="track-title" id="albumTrackTitle"></div>
+      <div class="track-artist" id="albumTrackArtist"></div>
+    </div>
+  </div>
+
+  <!-- Podcasts/Music App -->
+  <div class="podcasts-app" id="podcastsApp" onclick="closePodcastsApp()">
+    <div class="podcasts-container" onclick="event.stopPropagation()">
+      <div class="podcasts-header">
+        <h2 style="color:#1db954; margin:0; text-align:center;">🎧 Podcasts / Music</h2>
+        <button class="refresh-podcasts-btn" onclick="refreshPodcasts()">🔄 Refresh</button>
+      </div>
+      
+      <div id="podcastsContent">
+        <div class="loading-podcasts">Loading podcasts...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Travel Map App -->
+  <div class="travel-app" id="travelApp" onclick="closeTravelApp()">
+    <div class="travel-container" onclick="event.stopPropagation()">
+      <div class="travel-header">
+        <h2 style="color:#9df; margin:0;">🗺️ Travel Map</h2>
+        <button class="refresh-travel-btn" onclick="refreshTravelMap()">🔄 Refresh</button>
+      </div>
+      
+      <div class="travel-tabs">
+        <div class="travel-tab active" onclick="switchTravelTab('map')">🗺️ World Map</div>
+        <div class="travel-tab" onclick="switchTravelTab('list')">📋 Travel List</div>
+        <div class="travel-tab" onclick="switchTravelTab('stats')">📊 Statistics</div>
+        <div class="travel-tab" onclick="switchTravelTab('regions')">🌍 Regions</div>
+      </div>
+      
+      <div id="travelStats" class="travel-stats" style="display: none;">
+        <div class="stat-card">
+          <div class="stat-number" id="totalLocations">0</div>
+          <div class="stat-label">Total Locations</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="visitedLocations">0</div>
+          <div class="stat-label">Visited</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="plannedLocations">0</div>
+          <div class="stat-label">Planned</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="totalRegions">0</div>
+          <div class="stat-label">Regions</div>
+        </div>
+      </div>
+      
+      <div id="mapView" class="map-container">
+        <div class="world-map" id="worldMap">
+          <!-- Map markers will be added here dynamically -->
+        </div>
+      </div>
+      
+      <div id="listView" class="travel-list" style="display: none;">
+        <!-- Travel list will be populated here -->
+      </div>
+      
+      <div id="regionsView" class="travel-list" style="display: none;">
+        <!-- Regions breakdown will be populated here -->
+      </div>
+    </div>
+  </div>
+
+
+
+  <script>
+    // Position app circles in a ring (like your pygame create_circles function)
+    function positionAppCircles() {
+      const numCircles = 8;
+      const angleStep = 360 / numCircles;
+      const centerX = 520; // Half of 1080px
+      const centerY = 520;
+      const radius = 1080 / 2.75; // Similar to your pygame calculation
+      const clockSmall = document.querySelector('.clock-small');
+
+      
+      for (let i = 0; i < numCircles; i++) {
+        const angle = (angleStep * i) * Math.PI / 180;
+        const x = centerX + radius * Math.cos(angle) - 70; // -70 to center the 140px circle
+        const y = centerY + radius * Math.sin(angle) - 70;
+        
+        const appCircle = document.getElementById(`app${i + 1}`);
+        appCircle.style.left = `${x}px`;
+        appCircle.style.top = `${y}px`;
+      }
+    }
+
+    // Initialize app positions
+    positionAppCircles();
+
+    // App click handlers
+
+    document.querySelectorAll('.app-circle').forEach(circle => {
+      circle.addEventListener('click', function() {
+        const appIndex = this.dataset.app;
+        console.log(`Launching App ${appIndex}`);
+        
+        // Route to different apps
+        if (appIndex === '1') {
+          openSleepApp();
+        } else if (appIndex === '2') {
+          openCommandApp();
+        } else if (appIndex === '3') {
+          openWeatherApp();
+        } else if (appIndex === '4') {
+          openTravelApp();
+        } else if (appIndex === '5') {
+          openStocksApp();
+        } else if (appIndex === '6') {
+          openSportsApp();
+        } else if (appIndex === '7') {
+          openPodcastsApp();
+        } else if (appIndex === '8') {
+          openVoiceApp();
+        } else {
+          // Other apps still show alert for now
+          alert(`Launching App ${appIndex}`);
+        }
+      });
+    });
+
+
+
+    // Voice assistant functionality
+    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+
+    const speak = (text) => {
+      // !ADD! ElevenLabs API Configuration
+      fetch("https://api.elevenlabs.io/v1/text-to-speech/YOUR_VOICE_ID", {
+        method: "POST",
+        headers: {
+          "xi-api-key": "YOUR_ELEVENLABS_API_KEY", // !ADD! Get from https://elevenlabs.io/
+          "Content-Type": "application/json",
+          "Accept": "audio/mpeg"
+        },
+        body: JSON.stringify({
+          text: text,
+          voice_settings: {
+            stability: 0.9,
+            similarity_boost: 0.75
+          }
+        })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.blob();
+      })
+      .then(blob => {
+        const audio = new Audio(URL.createObjectURL(blob));
+        audio.play();
+        audio.onended = () => {
+          recognition.start();
+        };
+      })
+      .catch(err => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.onend = () => {
+          recognition.start();
+        };
+        speechSynthesis.speak(utterance);
+      });
+    };
+
+    // Show blur effect and text (like your apply_blur_ring_and_text function)
+    function showTextOverlay(text) {
+      const overlay = document.getElementById('blurOverlay');
+      const textDisplay = document.getElementById('textDisplay');
+      const gradientRing = document.getElementById('gradientRing');
+      
+      textDisplay.textContent = text;
+      overlay.style.display = 'block';
+      gradientRing.style.display = 'block';
+    }
+
+    function hideTextOverlay() {
+      const overlay = document.getElementById('blurOverlay');
+      const gradientRing = document.getElementById('gradientRing');
+      
+      overlay.style.display = 'none';
+      gradientRing.style.display = 'none';
+    }
+
+    recognition.onresult = (event) => {
+      const userInput = event.results[0][0].transcript;
+      console.log("User said:", userInput);
+      
+      // Show user query
+      showTextOverlay(userInput);
+      
+      // !ADD! Webhook Authentication
+      const auth = btoa("YOUR_USERNAME:YOUR_PASSWORD"); // !ADD! Set your webhook credentials
+
+      fetch("https://atimmeny.app.n8n.cloud/webhook/n8n", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Basic ${auth}`
+        },
+        body: JSON.stringify({ query: userInput })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const text = (data[0] && data[0].output) || data.output || data.voice_output || "Sorry, I didn't understand that.";
+        
+        // Show response
+        showTextOverlay(text);
+        speak(text);
+        
+        // Hide overlay after delay
+        setTimeout(() => {
+          hideTextOverlay();
+        }, 3000);
+      })
+      .catch(err => {
+        console.error(err);
+        hideTextOverlay();
+      });
+    };
+
+    let isVoiceAgentActive = false;
+
+    function activateJarvis() {
+      const circle = document.querySelector('.circle');
+      const barsContainer = document.getElementById('audioBars');
+
+      isVoiceAgentActive = !isVoiceAgentActive;
+
+      if (isVoiceAgentActive) {
+        circle.classList.add('active');
+
+        // Add bars
+        barsContainer.innerHTML = ''; // Clear old bars
+        for (let i = 0; i < 40; i++) {
+          const bar = document.createElement('div');
+          bar.className = 'audio-bar';
+          bar.style.animationDelay = `${Math.random() * 0.5}s`;
+          bar.style.height = `${(Math.random() * 80) + 20}%`;
+          barsContainer.appendChild(bar);
+        }
+
+        try {
+          recognition.start();
+        } catch (error) {
+          console.error('Recognition error:', error);
+        }
+
+      } else {
+        circle.classList.remove('active');
+        barsContainer.innerHTML = '';
+        recognition.stop();
+      }
+    }
+
+    // Try to load app images
+    document.querySelectorAll('.app-circle').forEach((circle, index) => {
+      const appIndex = String(index + 1);
+      const img = new Image();
+      img.onload = function() {
+        circle.innerHTML = '';
+        circle.appendChild(this);
+      };
+      img.onerror = function() {
+        // Keep text if image fails to load
+        console.log(`App ${appIndex} image not found, using text`);
+      };
+      img.src = `./apps/app-${appIndex}.png`;
+    });
+
+    function updateClock() {
+    const now = new Date();
+    const clockSmall = document.querySelector('.clock-small');
+    const dateString = now.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const timeString = now.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit', 
+      hour12: true 
+    });
+    const fullString = `${dateString} ${timeString}`;
+    
+    // Update the small clock
+    if (clockSmall) {
+      clockSmall.textContent = fullString;
+    }
+  }
+
+  // Update clock immediately and then every second
+  updateClock();
+  setInterval(updateClock, 1000);
+
+// Sleep Clock App Functions
+  function openSleepApp() {
+    document.getElementById('sleepApp').style.display = 'block';
+    initializeClock();
+    startClockUpdates();
+  }
+
+  function closeSleepApp() {
+    document.getElementById('sleepApp').style.display = 'none';
+    if (clockInterval) {
+      clearInterval(clockInterval);
+    }
+  }
+
+  function initializeClock() {
+    // Create hour numbers
+    const numbersContainer = document.getElementById('hourNumbers');
+    numbersContainer.innerHTML = '';
+    
+    for (let i = 1; i <= 12; i++) {
+      const number = document.createElement('div');
+      number.className = 'hour-number';
+      number.textContent = i;
+      // Put 12 at the top (0 degrees), 1 at 30 degrees, 2 at 60 degrees, etc.
+      const angle = (i - 12) * 30; // Subtract 12 to put 12 at the top
+      number.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+      numbersContainer.appendChild(number);
+    }
+  }
+
+  let clockInterval;
+
+  function updateAnalogClock() {
+    const now = new Date();
+    const hours = now.getHours() % 12;
+    const minutes = now.getMinutes();
+    const seconds = now.getSeconds();
+    
+    // Calculate angles
+    const hourAngle = (hours * 30) + (minutes * 0.5);
+    const minuteAngle = minutes * 6;
+    const secondAngle = seconds * 6;
+    
+    // Update hands
+    document.getElementById('hourHand').style.transform = 
+      `translate(-50%, -100%) rotate(${hourAngle}deg)`;
+    document.getElementById('minuteHand').style.transform = 
+      `translate(-50%, -100%) rotate(${minuteAngle}deg)`;
+    document.getElementById('secondHand').style.transform = 
+      `translate(-50%, -100%) rotate(${secondAngle}deg)`;
+  }
+
+  function startClockUpdates() {
+    updateAnalogClock(); // Update immediately
+    clockInterval = setInterval(updateAnalogClock, 1000);
+  }
+
+  // Command Board App Functions
+  function openCommandApp() {
+    document.getElementById('commandApp').style.display = 'block';
+    
+    // Add black box with z-index 4
+    const blackBox = document.createElement('div');
+    blackBox.id = 'commandAppBlackBox';
+    blackBox.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 2000px;
+      background-color: black;
+      z-index: 4;
+      border-radius: 10px;
+    `;
+    document.body.appendChild(blackBox);
+  }
+
+  function closeCommandApp() {
+    document.getElementById('commandApp').style.display = 'none';
+    
+    // Remove black box when closing command app
+    const blackBox = document.getElementById('commandAppBlackBox');
+    if (blackBox) {
+      blackBox.remove();
+    }
+  }
+
+  function executeCommand(command) {
+    const button = event.target.closest('.command-button');
+    
+    // Show executing state
+    button.classList.add('executing');
+    button.classList.remove('success', 'error');
+    
+    const auth = btoa("YOUR_USERNAME:YOUR_PASSWORD");
+
+    fetch("https://atimmeny.app.n8n.cloud/webhook/n8n", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${auth}`
+      },
+      body: JSON.stringify({ query: command })
+    })
+    .then(res => res.json())
+    .then(data => {
+      // Show success state
+      button.classList.remove('executing');
+      button.classList.add('success');
+      
+      // Reset after 2 seconds
+      setTimeout(() => {
+        button.classList.remove('success');
+      }, 2000);
+    })
+    .catch(err => {
+      console.error('Command failed:', err);
+      
+      // Show error state
+      button.classList.remove('executing');
+      button.classList.add('error');
+      
+      // Reset after 2 seconds
+      setTimeout(() => {
+        button.classList.remove('error');
+      }, 2000);
+    });
+  }
+
+  // Voice Notes App Functions
+
+  let mediaRecorder;
+  let audioChunks = [];
+  let savedNotes = [];
+
+  function openVoiceApp() {
+    document.getElementById('voiceApp').style.display = 'block';
+    renderVoiceNotes();
+    
+    // Add black box with z-index 2
+    const blackBox = document.createElement('div');
+    blackBox.id = 'voiceAppBlackBox';
+    blackBox.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 2000px;
+      background-color: black;
+      z-index: 4;
+      border-radius: 10px;
+    `;
+    document.body.appendChild(blackBox);
+  }
+
+  function closeVoiceApp() {
+    document.getElementById('voiceApp').style.display = 'none';
+    
+    // Remove black box when closing voice app
+    const blackBox = document.getElementById('voiceAppBlackBox');
+    if (blackBox) {
+      blackBox.remove();
+    }
+  }
+
+  function startRecording() {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = e => {
+          audioChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(audioChunks, { type: 'audio/webm' });
+          const url = URL.createObjectURL(blob);
+          const timestamp = new Date().toLocaleString();
+          savedNotes.push({ timestamp, url });
+          renderVoiceNotes();
+        };
+      })
+      .catch(err => console.error('Mic access denied', err));
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      mediaRecorder.stop();
+    }
+  }
+
+  function renderVoiceNotes() {
+    const list = document.getElementById('notesList');
+    list.innerHTML = '';
+
+    savedNotes.forEach((note, index) => {
+      const div = document.createElement('div');
+      div.innerHTML = `
+        <span>${note.timestamp}</span>
+        <div>
+          <button onclick="playNote(${index})">▶️</button>
+          <button onclick="deleteNote(${index})">🗑️</button>
+        </div>
+      `;
+      list.appendChild(div);
+    });
+  }
+
+  function playNote(index) {
+    const audio = new Audio(savedNotes[index].url);
+    audio.play();
+  }
+
+  function deleteNote(index) {
+    savedNotes.splice(index, 1);
+    renderVoiceNotes();
+  }
+
+  // Stock Jarvis Circle functionality
+
+  function openStocksApp() {
+    console.log('Opening stocks app...');
+    document.getElementById('stocksApp').style.display = 'block';
+    
+    // Load stock data immediately
+    console.log('About to call loadMyStockPortfolio...');
+    loadMyStockPortfolio();
+    
+    console.log('About to call renderStocksDisplay...');
+    renderStocksDisplay();
+    
+    // Then fetch current prices
+    fetchAllStockPrices();
+  }
+
+  // Global variables for stocks
+  let stocksData = [];
+  let currentStock = null;
+  let chartWidget = null;
+
+  async function fetchStocks() {
+    const container = document.getElementById('stocksContent');
+    container.innerHTML = `<p style="text-align:center;">Loading stock data...</p>`;
+
+    try {
+      // Load your stock portfolio data first
+      loadStockData();
+      
+      // Show the stocks with purchase prices immediately
+      renderStocksDisplay();
+      
+      // Then fetch current prices for all stocks
+      await fetchAllStockPrices();
+      
+    } catch (err) {
+      console.error('❌ Failed to fetch stocks:', err);
+      container.innerHTML = `<p style="text-align:center; color: #f44336;">Error loading data.</p>`;
+    }
+  }
+
+  function loadMyStockPortfolio() {
+    console.log('Loading stock data...');
+    try {
+      // Your actual stock portfolio data
+      stocksData = [
+        { 'Stock Ticker': 'AAPL', 'Shares': 10.00, 'Share Price': 150.00 },
+        { 'Stock Ticker': 'GOOGL', 'Shares': 5.00, 'Share Price': 2800.00 },
+        { 'Stock Ticker': 'MSFT', 'Shares': 8.00, 'Share Price': 300.00 },
+        { 'Stock Ticker': 'AMZN', 'Shares': 2.00, 'Share Price': 3300.00 },
+        { 'Stock Ticker': 'TSLA', 'Shares': 3.00, 'Share Price': 800.00 },
+        { 'Stock Ticker': 'NVDA', 'Shares': 4.00, 'Share Price': 500.00 },
+        { 'Stock Ticker': 'META', 'Shares': 6.00, 'Share Price': 350.00 },
+        { 'Stock Ticker': 'NFLX', 'Shares': 2.00, 'Share Price': 600.00 },
+        { 'Stock Ticker': 'SPY', 'Shares': 20.00, 'Share Price': 450.00 }
+      ];
+      
+      console.log('Stocks loaded:', stocksData);
+      console.log('stocksData length after loading:', stocksData.length);
+      updateStockDropdown();
+    } catch (error) {
+      console.error('Error in loadMyStockPortfolio:', error);
+    }
+  }
+
+  async function fetchAllStockPrices() {
+    const container = document.getElementById('stocksContent');
+    
+    if (stocksData.length === 0) {
+      container.innerHTML = `<p style="text-align:center;">No stocks found. Add stocks to Airtable first.</p>`;
+      return;
+    }
+
+    container.innerHTML = `<p style="text-align:center;">Fetching current prices...</p>`;
+
+    const stockPromises = stocksData.map(async (stock) => {
+      try {
+        const ticker = stock['Stock Ticker'];
+        const finnhubURL = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=YOUR_FINNHUB_API_TOKEN`;
+        
+        const response = await fetch(finnhubURL);
+        const quoteData = await response.json();
+        
+        return {
+          ...stock,
+          currentPrice: quoteData.c,
+          change: quoteData.d,
+          changePercent: quoteData.dp,
+          high: quoteData.h,
+          low: quoteData.l,
+          open: quoteData.o,
+          previousClose: quoteData.pc
+        };
+      } catch (err) {
+        console.error(`❌ Failed to fetch ${stock['Stock Ticker']}:`, err);
+        return {
+          ...stock,
+          currentPrice: 'N/A',
+          change: 0,
+          changePercent: 0,
+          high: 'N/A',
+          low: 'N/A',
+          open: 'N/A',
+          previousClose: 'N/A'
+        };
+      }
+    });
+
+    try {
+      const updatedStocks = await Promise.all(stockPromises);
+      stocksData = updatedStocks;
+      renderStocksDisplay();
+    } catch (err) {
+      console.error('❌ Failed to fetch stock prices:', err);
+      container.innerHTML = `<p style="text-align:center; color: #f44336;">Error fetching stock prices.</p>`;
+    }
+  }
+
+  function updateStockDropdown() {
+    const dropdown = document.getElementById('stockDropdown');
+    dropdown.innerHTML = '<option value="">Select a stock...</option>';
+    
+    stocksData.forEach(stock => {
+      const option = document.createElement('option');
+      option.value = stock['Stock Ticker'];
+      option.textContent = `${stock['Stock Ticker']}`;
+      dropdown.appendChild(option);
+    });
+  }
+
+  function renderStocksDisplay() {
+    const container = document.getElementById('stocksContent');
+    
+    console.log('Rendering stocks display. stocksData length:', stocksData.length);
+    console.log('stocksData:', stocksData);
+    
+    if (stocksData.length === 0) {
+      container.innerHTML = `<p style="text-align:center;">No stocks available.</p>`;
+      return;
+    }
+
+    const stocksHTML = stocksData.map(stock => {
+      const isPositive = stock.change >= 0;
+      const changeColor = isPositive ? 'positive' : 'negative';
+      const changeSymbol = isPositive ? '+' : '';
+      
+      return `
+        <div class="stock-card">
+          <div class="stock-info">
+            <div class="stock-price">$${stock.currentPrice || 'N/A'}</div>
+            <div class="stock-change ${changeColor}">
+              ${changeSymbol}$${stock.change || 0} (${changeSymbol}${stock.changePercent || 0}%)
+            </div>
+            <div class="stock-details">
+              <div>High: $${stock.high || 'N/A'}</div>
+              <div>Low: $${stock.low || 'N/A'}</div>
+              <div>Open: $${stock.open || 'N/A'}</div>
+            </div>
+          </div>
+          <div class="stock-details">
+            <div><strong>${stock['Stock Ticker']}</strong></div>
+            <div class="stock-actions">
+              <button onclick="showStockChart('${stock['Stock Ticker']}')">📈 Chart</button>
+              <button onclick="refreshStockPrice('${stock['Stock Ticker']}')">🔄 Refresh</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = stocksHTML;
+  }
+
+  function loadStockData() {
+    const dropdown = document.getElementById('stockDropdown');
+    const selectedTicker = dropdown.value;
+    
+    if (selectedTicker) {
+      currentStock = stocksData.find(stock => stock['Stock Ticker'] === selectedTicker);
+      if (currentStock) {
+        showStockChart(selectedTicker);
+      }
+    }
+  }
+
+  async function showStockChart(ticker) {
+    const chartContainer = document.getElementById('chartContainer');
+    const chartTitle = document.getElementById('chartTitle');
+    
+    chartTitle.textContent = `${ticker} - Trading Chart`;
+    chartContainer.style.display = 'block';
+    
+    // Initialize TradingView chart
+    if (chartWidget) {
+      chartWidget.remove();
+    }
+    
+    chartWidget = new TradingView.widget({
+      "width": "100%",
+      "height": "100%",
+      "symbol": ticker,
+      "interval": "D",
+      "timezone": "America/New_York",
+      "theme": "dark",
+      "style": "1",
+      "locale": "en",
+      "toolbar_bg": "#f1f3f6",
+      "enable_publishing": false,
+      "hide_top_toolbar": false,
+      "hide_legend": false,
+      "save_image": false,
+      "container_id": "tradingChart",
+      "studies": [
+        "RSI@tv-basicstudies",
+        "MACD@tv-basicstudies"
+      ]
+    });
+  }
+
+  function closeChart() {
+    const chartContainer = document.getElementById('chartContainer');
+    chartContainer.style.display = 'none';
+    
+    if (chartWidget) {
+      chartWidget.remove();
+      chartWidget = null;
+    }
+  }
+
+  async function refreshStockPrice(ticker) {
+    try {
+      const finnhubURL = `https://finnhub.io/api/v1/quote?symbol=${ticker}&token=YOUR_FINNHUB_API_TOKEN`;
+      const response = await fetch(finnhubURL);
+      const quoteData = await response.json();
+      
+      // Update the stock data
+      const stockIndex = stocksData.findIndex(stock => stock['Stock Ticker'] === ticker);
+      if (stockIndex !== -1) {
+        stocksData[stockIndex] = {
+          ...stocksData[stockIndex],
+          currentPrice: quoteData.c,
+          change: quoteData.d,
+          changePercent: quoteData.dp,
+          high: quoteData.h,
+          low: quoteData.l,
+          open: quoteData.o,
+          previousClose: quoteData.pc
+        };
+        
+        renderStocksDisplay();
+      }
+    } catch (err) {
+      console.error(`❌ Failed to refresh ${ticker}:`, err);
+    }
+  }
+
+  async function addStockToAirtable() {
+    const ticker = prompt('Enter stock ticker (e.g., AAPL):');
+    if (!ticker) return;
+    
+    const companyName = prompt('Enter company name:');
+    if (!companyName) return;
+    
+    try {
+      // This would be your Airtable webhook URL for adding stocks
+      const airtableURL = 'https://atimmeny.app.n8n.cloud/webhook/airtable-add-stock';
+      const response = await fetch(airtableURL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ticker: ticker.toUpperCase(),
+          companyName: companyName
+        })
+      });
+      
+      if (response.ok) {
+        alert('Stock added successfully!');
+        await syncAirtableStocks();
+        await fetchAllStockPrices();
+      } else {
+        alert('Failed to add stock. Please try again.');
+      }
+    } catch (err) {
+      console.error('❌ Failed to add stock:', err);
+      alert('Error adding stock. Please try again.');
+    }
+  }
+  function closeStocksApp() {
+  document.getElementById('stocksApp').style.display = 'none';
+  }
+
+  function launchMiniStockJarvis() {
+  console.log("Mini Jarvis circle clicked");
+
+  const auth = btoa("YOUR_USERNAME:YOUR_PASSWORD");
+  fetch("https://atimmeny.app.n8n.cloud/webhook/stock", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Basic ${auth}`
+    },
+    body: JSON.stringify({ query: "mini stock trigger" })
+  })
+  .then(res => res.json())
+  .then(data => {
+    const response = data.output || "Do you have a Stock Question?";
+    showTextOverlay(response);
+    speak(response);
+    setTimeout(hideTextOverlay, 3000);
+  })
+  .catch(err => {
+    console.error("Mini stock request failed:", err);
+    showTextOverlay("Something went wrong.");
+    setTimeout(hideTextOverlay, 3000);
+  });
+  }
+
+  // Sports App Functions
+  let currentSport = 'all';
+  let sportsData = {};
+  let allGamesData = [];
+
+  function openSportsApp() {
+    document.getElementById('sportsApp').style.display = 'block';
+    // Auto-fetch real data when app opens
+    fetchSportsData();
+    
+    // Add black box with z-index 4
+    const blackBox = document.createElement('div');
+    blackBox.id = 'sportsAppBlackBox';
+    blackBox.style.cssText = `
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 2000px;
+      height: 2000px;
+      background-color: black;
+      z-index: 4;
+      border-radius: 10px;
+    `;
+    document.body.appendChild(blackBox);
+  }
+
+  function closeSportsApp() {
+    document.getElementById('sportsApp').style.display = 'none';
+    
+    // Remove black box when closing sports app
+    const blackBox = document.getElementById('sportsAppBlackBox');
+    if (blackBox) {
+      blackBox.remove();
+    }
+  }
+
+  function switchSport(sport) {
+    currentSport = sport;
+    
+    // Update active tab
+    document.querySelectorAll('.sport-tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Show/hide league leaders based on sport
+    const leadersSection = document.getElementById('leagueLeaders');
+    if (sport === 'all') {
+      leadersSection.style.display = 'none';
+    } else {
+      leadersSection.style.display = 'block';
+      fetchLeagueLeaders(sport);
+    }
+    
+    // Auto-fetch real data when switching sports
+    fetchSportsData();
+  }
+
+  function refreshSports() {
+    fetchSportsData();
+  }
+
+  async function fetchSportsData() {
+    const container = document.getElementById('sportsContent');
+    container.innerHTML = '<div class="loading">Loading sports data...</div>';
+
+    try {
+      if (currentSport === 'all') {
+        // Fetch all sports using ESPN APIs
+        const espnSports = [
+          { key: 'basketball/nba', name: 'nba' },
+          { key: 'football/nfl', name: 'nfl' },
+          { key: 'baseball/mlb', name: 'mlb' },
+          { key: 'hockey/nhl', name: 'nhl' }
+        ];
+        
+        const allPromises = espnSports.map(sport => 
+          fetch(`https://site.api.espn.com/apis/site/v2/sports/${sport.key}/scoreboard`)
+            .then(res => {
+              console.log(`ESPN API Response for ${sport.name}:`, res.status);
+              if (!res.ok) {
+                console.error(`ESPN API Error for ${sport.name}:`, res.status, res.statusText);
+                return { name: sport.name, events: [] };
+              }
+              return res.json().then(data => ({ name: sport.name, events: data.events || [] }));
+            })
+            .catch(err => {
+              console.error(`ESPN Fetch error for ${sport.name}:`, err);
+              return { name: sport.name, events: [] };
+            })
+        );
+        
+        const allResults = await Promise.all(allPromises);
+        console.log('All ESPN API Results:', allResults);
+        
+        const allGames = [];
+        
+        allResults.forEach((sportData) => {
+          console.log(`Processing ${sportData.name}:`, sportData.events);
+          const formattedGames = formatEspnApiData(sportData.events, sportData.name);
+          allGames.push(...formattedGames);
+        });
+        
+        console.log('All formatted games:', allGames);
+        
+        // Sort by time and filter for today's games
+        const sortedGames = sortGamesByTime(allGames);
+        console.log('Sorted games:', sortedGames);
+        allGamesData = sortedGames;
+        renderSportsGrid(sortedGames);
+        
+      } else {
+        // Single sport
+        const espnKey = getEspnSportKey(currentSport);
+        console.log(`Fetching single sport: ${espnKey}`);
+        
+        const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${espnKey}/scoreboard`);
+        
+        console.log(`Single sport response:`, response.status, response.statusText);
+        
+        if (!response.ok) {
+          throw new Error(`ESPN API Error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log(`Single sport data:`, data);
+        const formattedData = formatEspnApiData(data.events || [], currentSport);
+        renderSportsData(formattedData);
+      }
+      
+    } catch (err) {
+      console.error('Failed to fetch sports data:', err);
+      // Fallback to mock data
+      const mockData = getMockSportsData(currentSport);
+      if (currentSport === 'all') {
+        renderSportsGrid(mockData);
+      } else {
+        renderSportsData(mockData);
+      }
+    }
+  }
+
+  function getEspnSportKey(sport) {
+    const sportKeys = {
+      'nba': 'basketball/nba',
+      'nfl': 'football/nfl', 
+      'mlb': 'baseball/mlb',
+      'nhl': 'hockey/nhl'
+    };
+    return sportKeys[sport] || 'basketball/nba';
+  }
+
+  function formatEspnApiData(events, sport) {
+    console.log(`Formatting ESPN data for ${sport}:`, events);
+    
+    return events.map(event => {
+      console.log(`Processing ESPN game:`, event);
+      
+      // ESPN API structure
+      const homeTeam = event.competitions?.[0]?.competitors?.find(c => c.homeAway === 'home');
+      const awayTeam = event.competitions?.[0]?.competitors?.find(c => c.homeAway === 'away');
+      
+      const gameData = {
+        id: event.id,
+        sport: sport,
+        status: event.status?.type?.state || 'scheduled',
+        time: event.status?.type?.shortDetail || event.date,
+        homeTeam: homeTeam?.team?.name || 'TBD',
+        awayTeam: awayTeam?.team?.name || 'TBD',
+        homeScore: parseInt(homeTeam?.score) || 0,
+        awayScore: parseInt(awayTeam?.score) || 0,
+        details: `${event.competitions?.[0]?.venue?.fullName || 'TBD'} • ${event.competitions?.[0]?.attendance || 'TBD'} fans`,
+        scheduled: event.date
+      };
+      
+      console.log(`Formatted ESPN game:`, gameData);
+      return gameData;
+    });
+  }
+
+  function sortGamesByTime(games) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    return games
+      .filter(game => {
+        // Only show today's games or games with no date (ongoing)
+        if (!game.scheduled) return true;
+        const gameDate = game.scheduled.split('T')[0];
+        return gameDate === today;
+      })
+      .sort((a, b) => {
+        // Sort by status: live first, then scheduled, then final
+        const statusOrder = { 'live': 0, 'scheduled': 1, 'final': 2 };
+        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+        if (statusDiff !== 0) return statusDiff;
+        
+        // Then sort by time
+        if (a.scheduled && b.scheduled) {
+          return new Date(a.scheduled) - new Date(b.scheduled);
+        }
+        return 0;
+      });
+  }
+
+  function renderSportsGrid(games) {
+    const container = document.getElementById('sportsContent');
+    
+    if (games.length === 0) {
+      container.innerHTML = '<div class="loading">No games scheduled for today</div>';
+      return;
+    }
+
+    let html = '<div class="games-grid">';
+    games.forEach(game => {
+      const statusClass = `status-${game.status}`;
+      const statusText = game.status === 'live' ? 'LIVE' : 
+                        game.status === 'final' ? 'FINAL' : 'SCHEDULED';
+      
+      const sportIcon = {
+        'nba': '🏀',
+        'nfl': '🏈', 
+        'mlb': '⚾',
+        'nhl': '🏒'
+      }[game.sport] || '🏈';
+      
+      html += `
+        <div class="game-card">
+          <div class="game-header">
+            <span>${sportIcon} ${game.sport.toUpperCase()}</span>
+            <span class="game-status ${statusClass}">${statusText}</span>
+          </div>
+          
+          <div class="teams-container">
+            <div class="team">
+              <div class="team-name">${game.awayTeam}</div>
+              <div class="team-score">${game.awayScore}</div>
+            </div>
+            <div class="vs">@</div>
+            <div class="team">
+              <div class="team-score">${game.homeScore}</div>
+              <div class="team-name">${game.homeTeam}</div>
+            </div>
+          </div>
+          
+          <div class="game-details">
+            ${game.time}
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+  }
+
+  function getMockSportsData(sport) {
+    const data = {
+      nba: [
+        {
+          id: 1,
+          status: 'live',
+          time: 'Q3 8:45',
+          homeTeam: 'Lakers',
+          awayTeam: 'Warriors',
+          homeScore: 98,
+          awayScore: 92,
+          details: 'Staples Center • 15,000 fans'
+        },
+        {
+          id: 2,
+          status: 'scheduled',
+          time: '8:30 PM ET',
+          homeTeam: 'Celtics',
+          awayTeam: 'Heat',
+          homeScore: 0,
+          awayScore: 0,
+          details: 'TD Garden • 18,624 fans'
+        },
+        {
+          id: 3,
+          status: 'final',
+          time: 'Final',
+          homeTeam: 'Nets',
+          awayTeam: 'Knicks',
+          homeScore: 112,
+          awayScore: 108,
+          details: 'Barclays Center • 17,732 fans'
+        }
+      ],
+      nfl: [
+        {
+          id: 1,
+          status: 'live',
+          time: 'Q4 2:30',
+          homeTeam: 'Chiefs',
+          awayTeam: 'Raiders',
+          homeScore: 24,
+          awayScore: 21,
+          details: 'Arrowhead Stadium • 76,416 fans'
+        },
+        {
+          id: 2,
+          status: 'scheduled',
+          time: '8:20 PM ET',
+          homeTeam: 'Cowboys',
+          awayTeam: 'Eagles',
+          homeScore: 0,
+          awayScore: 0,
+          details: 'AT&T Stadium • 80,000 fans'
+        }
+      ],
+      mlb: [
+        {
+          id: 1,
+          status: 'live',
+          time: 'B7',
+          homeTeam: 'Yankees',
+          awayTeam: 'Red Sox',
+          homeScore: 5,
+          awayScore: 3,
+          details: 'Yankee Stadium • 46,537 fans'
+        }
+      ],
+      nhl: [
+        {
+          id: 1,
+          status: 'live',
+          time: 'P3 12:45',
+          homeTeam: 'Bruins',
+          awayTeam: 'Maple Leafs',
+          homeScore: 2,
+          awayScore: 1,
+          details: 'TD Garden • 17,565 fans'
+        }
+      ]
+    };
+
+    return data[sport] || [];
+  }
+
+  function renderSportsData(games) {
+    const container = document.getElementById('sportsContent');
+    
+    if (games.length === 0) {
+      container.innerHTML = '<div class="loading">No games scheduled</div>';
+      return;
+    }
+
+    let html = '';
+    games.forEach(game => {
+      const statusClass = `status-${game.status}`;
+      const statusText = game.status === 'live' ? 'LIVE' : 
+                        game.status === 'final' ? 'FINAL' : 'SCHEDULED';
+      
+      html += `
+        <div class="game-card">
+          <div class="game-header">
+            <span>${game.time}</span>
+            <span class="game-status ${statusClass}">${statusText}</span>
+          </div>
+          
+          <div class="teams-container">
+            <div class="team">
+              <div class="team-name">${game.awayTeam}</div>
+              <div class="team-score">${game.awayScore}</div>
+            </div>
+            <div class="vs">@</div>
+            <div class="team">
+              <div class="team-score">${game.homeScore}</div>
+              <div class="team-name">${game.homeTeam}</div>
+            </div>
+          </div>
+          
+          <div class="game-details">
+            ${game.details}
+          </div>
+          
+          ${game.status === 'live' ? `
+            <div class="player-props">
+              <div class="prop-item">
+                <span>🏀 Points Leader:</span>
+                <span>LeBron James (28 pts)</span>
+              </div>
+              <div class="prop-item">
+                <span>🎯 3PT Leader:</span>
+                <span>Stephen Curry (5/8)</span>
+              </div>
+              <div class="prop-item">
+                <span>📊 Rebounds:</span>
+                <span>Anthony Davis (12)</span>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  async function fetchLeagueLeaders(sport) {
+    const container = document.getElementById('leadersContent');
+    container.innerHTML = '<div class="loading">Loading league leaders...</div>';
+
+    try {
+      const espnKey = getEspnSportKey(sport);
+      
+      // Get current year for season parameter
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1; // 1-12
+      
+      // Determine which season to use based on sport and time of year
+      let seasonYear = currentYear;
+      
+      if (sport === 'nfl') {
+        // NFL 2024-25 season starts September 2024, so use 2024 for 2024-25 season
+        if (currentMonth >= 9) {
+          seasonYear = currentYear; // 2024 for 2024-25 season
+        } else {
+          seasonYear = currentYear - 1; // 2023 for 2023-24 season
+        }
+      } else if (sport === 'nba') {
+        // NBA 2024-25 season starts October 2024, so use 2024 for 2024-25 season
+        if (currentMonth >= 10) {
+          seasonYear = currentYear; // 2024 for 2024-25 season
+        } else {
+          seasonYear = currentYear - 1; // 2023 for 2023-24 season
+        }
+      } else if (sport === 'nhl') {
+        // NHL 2024-25 season starts October 2024, so use 2024 for 2024-25 season
+        if (currentMonth >= 10) {
+          seasonYear = currentYear; // 2024 for 2024-25 season
+        } else {
+          seasonYear = currentYear - 1; // 2023 for 2023-24 season
+        }
+      } else if (sport === 'mlb') {
+        // MLB 2025 season starts March 2025, so use 2025 for 2025 season
+        if (currentMonth >= 3) {
+          seasonYear = currentYear; // 2025 for 2025 season
+        } else {
+          seasonYear = currentYear - 1; // 2024 for 2024 season
+        }
+      }
+      
+      const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/${espnKey}/leaders?season=${seasonYear}`);
+      
+      if (!response.ok) {
+        throw new Error(`ESPN API Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log(`League leaders data for ${sport} (season ${seasonYear}):`, data);
+      
+      const formattedLeaders = formatLeagueLeaders(data, sport);
+      renderLeagueLeaders(formattedLeaders, sport, seasonYear);
+      
+    } catch (err) {
+      console.error('Failed to fetch league leaders:', err);
+      // Show mock leaders data
+      const mockLeaders = getMockLeagueLeaders(sport);
+      renderLeagueLeaders(mockLeaders, sport, '2024');
+    }
+  }
+
+  function formatLeagueLeaders(data, sport) {
+    const leaders = {};
+    
+    // ESPN API structure varies by sport
+    if (data.categories) {
+      data.categories.forEach(category => {
+        if (category.leaders) {
+          leaders[category.name] = category.leaders.slice(0, 5); // Top 5
+        }
+      });
+    }
+    
+    return leaders;
+  }
+
+  function renderLeagueLeaders(leaders, sport, seasonYear) {
+    const container = document.getElementById('leadersContent');
+    
+    if (!leaders || Object.keys(leaders).length === 0) {
+      container.innerHTML = '<div class="loading">League leaders data not available</div>';
+      return;
+    }
+
+    let html = '';
+    
+    // Define categories for each sport
+    const categories = {
+      'nhl': ['Goals', 'Points', 'Assists'],
+      'nfl': ['Passing Yards', 'Rushing Yards', 'Receiving Yards', 'Passing TDs', 'Rush + Receiving TDs'],
+      'mlb': ['HRs', 'Pitcher Ks', 'Batting Avg', 'RBIs', 'Runs', 'Pitcher ERA'],
+      'nba': ['Points', 'Rebounds', 'Assists', 'Blocks', 'Steals']
+    };
+    
+    const sportCategories = categories[sport] || [];
+    
+    // Add season info to the header
+    const seasonInfo = getSeasonInfo(sport, seasonYear);
+    
+    html += `<div style="text-align: center; margin-bottom: 15px; color: #9df; font-size: 14px;">${seasonInfo}</div>`;
+    
+    sportCategories.forEach(category => {
+      const categoryLeaders = leaders[category] || [];
+      
+      html += `
+        <div class="leader-category">
+          <h4>${category}</h4>
+          ${categoryLeaders.map((leader, index) => `
+            <div class="leader-item">
+              <span class="leader-rank">${index + 1}</span>
+              <span class="leader-name">${leader.athlete?.displayName || leader.name || 'N/A'}</span>
+              <span class="leader-stat">${leader.value || leader.stat || 'N/A'}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    });
+    
+    container.innerHTML = html;
+  }
+
+  function getSeasonInfo(sport, seasonYear) {
+    const currentYear = new Date().getFullYear();
+    const currentMonth = new Date().getMonth() + 1;
+    
+    if (sport === 'nfl') {
+      if (currentMonth >= 9) {
+        return `2024-25 Season Stats (Current)`;
+      } else {
+        return `2023-24 Season Stats (Completed)`;
+      }
+    } else if (sport === 'nba') {
+      if (currentMonth >= 10) {
+        return `2024-25 Season Stats (Current)`;
+      } else {
+        return `2023-24 Season Stats (Completed)`;
+      }
+    } else if (sport === 'nhl') {
+      if (currentMonth >= 10) {
+        return `2024-25 Season Stats (Current)`;
+      } else {
+        return `2023-24 Season Stats (Completed)`;
+      }
+    } else if (sport === 'mlb') {
+      if (currentMonth >= 3) {
+        return `2025 Season Stats (Current)`;
+      } else {
+        return `2024 Season Stats (Completed)`;
+      }
+    }
+    
+    return `${seasonYear} Season Stats`;
+  }
+
+  function getMockLeagueLeaders(sport) {
+    const mockData = {
+      'nhl': {
+        'Goals': [
+          { athlete: { displayName: 'Auston Matthews' }, value: '45' },
+          { athlete: { displayName: 'Sam Reinhart' }, value: '42' },
+          { athlete: { displayName: 'Nathan MacKinnon' }, value: '41' }
+        ],
+        'Points': [
+          { athlete: { displayName: 'Nathan MacKinnon' }, value: '108' },
+          { athlete: { displayName: 'Nikita Kucherov' }, value: '107' },
+          { athlete: { displayName: 'Connor McDavid' }, value: '106' }
+        ],
+        'Assists': [
+          { athlete: { displayName: 'Connor McDavid' }, value: '78' },
+          { athlete: { displayName: 'Nikita Kucherov' }, value: '76' },
+          { athlete: { displayName: 'Nathan MacKinnon' }, value: '67' }
+        ]
+      },
+      'nfl': {
+        'Passing Yards': [
+          { athlete: { displayName: 'Patrick Mahomes' }, value: '4,183' },
+          { athlete: { displayName: 'Josh Allen' }, value: '4,156' },
+          { athlete: { displayName: 'Dak Prescott' }, value: '4,123' }
+        ],
+        'Rushing Yards': [
+          { athlete: { displayName: 'Christian McCaffrey' }, value: '1,459' },
+          { athlete: { displayName: 'Derrick Henry' }, value: '1,347' },
+          { athlete: { displayName: 'Breece Hall' }, value: '1,224' }
+        ],
+        'Receiving Yards': [
+          { athlete: { displayName: 'Tyreek Hill' }, value: '1,799' },
+          { athlete: { displayName: 'CeeDee Lamb' }, value: '1,749' },
+          { athlete: { displayName: 'Amon-Ra St. Brown' }, value: '1,515' }
+        ]
+      },
+      'mlb': {
+        'HRs': [
+          { athlete: { displayName: 'Shohei Ohtani' }, value: '44' },
+          { athlete: { displayName: 'Matt Olson' }, value: '43' },
+          { athlete: { displayName: 'Pete Alonso' }, value: '41' }
+        ],
+        'Batting Avg': [
+          { athlete: { displayName: 'Luis Arraez' }, value: '.354' },
+          { athlete: { displayName: 'Ronald Acuña Jr.' }, value: '.337' },
+          { athlete: { displayName: 'Corey Seager' }, value: '.327' }
+        ],
+        'RBIs': [
+          { athlete: { displayName: 'Matt Olson' }, value: '139' },
+          { athlete: { displayName: 'Shohei Ohtani' }, value: '136' },
+          { athlete: { displayName: 'Pete Alonso' }, value: '131' }
+        ]
+      },
+      'nba': {
+        'Points': [
+          { athlete: { displayName: 'Joel Embiid' }, value: '35.3' },
+          { athlete: { displayName: 'Luka Dončić' }, value: '33.9' },
+          { athlete: { displayName: 'Giannis Antetokounmpo' }, value: '31.1' }
+        ],
+        'Rebounds': [
+          { athlete: { displayName: 'Domantas Sabonis' }, value: '13.7' },
+          { athlete: { displayName: 'Rudy Gobert' }, value: '12.9' },
+          { athlete: { displayName: 'Nikola Jokić' }, value: '12.3' }
+        ],
+        'Assists': [
+          { athlete: { displayName: 'Tyrese Haliburton' }, value: '12.5' },
+          { athlete: { displayName: 'Trae Young' }, value: '11.0' },
+          { athlete: { displayName: 'Luka Dončić' }, value: '9.8' }
+        ]
+      }
+    };
+    
+    return mockData[sport] || {};
+  }
+
+  // Weather App Functions
+  const WEATHER_API_KEY = "YOUR_OPENWEATHER_API_KEY";
+  const WEATHER_LOCATION = "YOUR_CITY, YOUR_STATE";
+
+  function openWeatherApp() {
+    document.getElementById('weatherApp').style.display = 'block';
+    fetchWeatherData();
+  }
+
+  function closeWeatherApp() {
+    document.getElementById('weatherApp').style.display = 'none';
+  }
+
+  function refreshWeather() {
+    fetchWeatherData();
+  }
+
+  async function fetchWeatherData() {
+    const container = document.getElementById('weatherContent');
+    container.innerHTML = '<div class="loading">Loading weather data...</div>';
+
+    try {
+      // Try different location formats for your city
+      const locations = [
+        'YOUR_CITY,YOUR_STATE,US',
+        'YOUR_CITY,YOUR_STATE_FULL,US',
+        'NEARBY_CITY,YOUR_STATE,US', // Fallback to nearby city
+        'ANOTHER_CITY,YOUR_STATE,US'   // Another fallback
+      ];
+      
+      let forecastData = null;
+      let usedLocation = '';
+      
+      for (const location of locations) {
+        try {
+          console.log(`Trying location: ${location}`);
+          const forecastResponse = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${location}&appid=${WEATHER_API_KEY}&units=imperial`);
+          
+          console.log(`API Response status for ${location}:`, forecastResponse.status);
+          
+          if (forecastResponse.ok) {
+            forecastData = await forecastResponse.json();
+            usedLocation = location;
+            console.log(`Success with location: ${location}`);
+            break;
+          }
+        } catch (err) {
+          console.log(`Failed for location ${location}:`, err);
+        }
+      }
+      
+      if (!forecastData) {
+        throw new Error('No valid location found');
+      }
+      
+      console.log('Full forecast data:', forecastData);
+      console.log('First forecast item:', forecastData.list[0]);
+
+      // Extract current weather from first forecast item
+      const currentData = {
+        main: forecastData.list[0].main,
+        weather: forecastData.list[0].weather,
+        wind: forecastData.list[0].wind,
+        visibility: forecastData.list[0].visibility || 10000
+      };
+
+      console.log('Extracted current data:', currentData);
+      renderWeatherData(currentData, forecastData, usedLocation);
+      
+    } catch (err) {
+      console.error('Failed to fetch weather data:', err);
+      // Show mock weather data
+      const mockWeather = getMockWeatherData();
+      renderWeatherData(mockWeather.current, mockWeather.forecast, 'YOUR_CITY, YOUR_STATE');
+    }
+  }
+
+  function renderWeatherData(currentData, forecastData, location = WEATHER_LOCATION) {
+    const container = document.getElementById('weatherContent');
+    
+    console.log('Rendering weather data:', currentData, forecastData);
+    
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+
+    const weatherIcon = getWeatherIcon(currentData.weather[0].id);
+    console.log('Weather icon:', weatherIcon, 'for weather ID:', currentData.weather[0].id);
+    
+    // Format location for display
+    const displayLocation = location.replace(',US', '').replace(',NC', ', NC');
+    
+    let html = `
+      <div class="weather-header">
+        <div class="weather-location">${displayLocation}</div>
+        <div class="weather-date">${currentDate}</div>
+      </div>
+      
+      <div class="current-weather">
+        <div class="weather-main">
+          <div class="weather-temp">${Math.round(currentData.main.temp)}°</div>
+          <div class="weather-icon">${weatherIcon}</div>
+        </div>
+      </div>
+    `;
+
+    // Add hourly forecast if available
+    if (forecastData && forecastData.list) {
+      console.log('Processing hourly forecast with list:', forecastData.list.length, 'items');
+      const hourlyForecast = getHourlyForecast(forecastData.list);
+      console.log('Hourly forecast result:', hourlyForecast);
+      
+      html += `
+        <div class="hourly-forecast">
+          <div class="hourly-title">Next 5 hours</div>
+          <div class="hourly-grid">
+      `;
+      
+      hourlyForecast.forEach(hour => {
+        const hourIcon = getWeatherIcon(hour.weather[0].id);
+        html += `
+          <div class="hourly-item">
+            <div class="hourly-time">${hour.time}</div>
+            <div class="hourly-icon">${hourIcon}</div>
+            <div class="hourly-temp">${Math.round(hour.temp)}°</div>
+          </div>
+        `;
+      });
+      
+      html += `
+          </div>
+        </div>
+      `;
+    }
+
+    // Add weekly forecast if available
+    if (forecastData && forecastData.list) {
+      const weeklyForecast = getWeeklyForecast(forecastData.list);
+      
+      html += `
+        <div class="weekly-forecast">
+          <div class="weekly-title">7-Day Forecast</div>
+          <div class="weekly-grid">
+      `;
+      
+      weeklyForecast.forEach(day => {
+        const dayIcon = getWeatherIcon(day.weather[0].id);
+        html += `
+          <div class="weekly-item">
+            <div class="weekly-day">${day.day}</div>
+            <div class="weekly-icon">${dayIcon}</div>
+            <div class="weekly-temps">${Math.round(day.high)}° | ${Math.round(day.low)}°</div>
+          </div>
+        `;
+      });
+      
+      html += `
+          </div>
+        </div>
+      `;
+    }
+    
+    container.innerHTML = html;
+  }
+
+  function getWeatherIcon(weatherId) {
+    // Weather icon mapping based on OpenWeatherMap weather codes
+    const icons = {
+      200: '⛈️', 201: '⛈️', 202: '⛈️', 210: '⛈️', 211: '⛈️', 212: '⛈️', 221: '⛈️', 230: '⛈️', 231: '⛈️', 232: '⛈️',
+      300: '🌧️', 301: '🌧️', 302: '🌧️', 310: '🌧️', 311: '🌧️', 312: '🌧️', 313: '🌧️', 314: '🌧️', 321: '🌧️',
+      500: '🌧️', 501: '🌧️', 502: '🌧️', 503: '🌧️', 504: '🌧️', 511: '🌨️', 520: '🌧️', 521: '🌧️', 522: '🌧️', 531: '🌧️',
+      600: '🌨️', 601: '🌨️', 602: '🌨️', 611: '🌨️', 612: '🌨️', 613: '🌨️', 615: '🌨️', 616: '🌨️', 620: '🌨️', 621: '🌨️', 622: '🌨️',
+      701: '🌫️', 711: '🌫️', 721: '🌫️', 731: '🌫️', 741: '🌫️', 751: '🌫️', 761: '🌫️', 762: '🌫️', 771: '🌫️', 781: '🌪️',
+      800: '☀️',
+      801: '🌤️', 802: '⛅', 803: '☁️', 804: '☁️'
+    };
+    
+    return icons[weatherId] || '🌤️';
+  }
+
+  function getHourlyForecast(forecastList) {
+    const now = new Date();
+    const currentHour = now.getHours();
+    
+    // Get next 5 hours starting from current hour
+    const hourlyData = [];
+    
+    for (let i = 1; i <= 5; i++) {
+      const targetHour = (currentHour + i) % 24;
+      const targetTime = new Date(now);
+      targetTime.setHours(targetHour, 0, 0, 0);
+      
+      // Find the forecast item closest to this time
+      const closestForecast = forecastList.find(item => {
+        const forecastTime = new Date(item.dt * 1000);
+        return forecastTime.getHours() === targetHour && 
+               forecastTime.getDate() === targetTime.getDate();
+      });
+      
+      if (closestForecast) {
+        const timeString = targetTime.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          hour12: true 
+        });
+        
+        hourlyData.push({
+          time: timeString,
+          temp: closestForecast.main.temp,
+          weather: closestForecast.weather
+        });
+      }
+    }
+    
+    return hourlyData;
+  }
+
+  function getWeeklyForecast(forecastList) {
+    const dailyData = {};
+    
+    forecastList.forEach(item => {
+      const date = new Date(item.dt * 1000);
+      const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+      
+      if (!dailyData[day]) {
+        dailyData[day] = {
+          day: day,
+          high: item.main.temp_max,
+          low: item.main.temp_min,
+          weather: item.weather
+        };
+      } else {
+        // Update high/low if needed
+        if (item.main.temp_max > dailyData[day].high) {
+          dailyData[day].high = item.main.temp_max;
+        }
+        if (item.main.temp_min < dailyData[day].low) {
+          dailyData[day].low = item.main.temp_min;
+        }
+      }
+    });
+    
+    return Object.values(dailyData).slice(0, 7);
+  }
+
+  function getMockWeatherData() {
+    return {
+      current: {
+        main: {
+          temp: 72,
+          feels_like: 74,
+          humidity: 65,
+          pressure: 1013,
+          temp_max: 78,
+          temp_min: 68
+        },
+        weather: [{ id: 800, description: 'clear sky' }],
+        wind: { speed: 8 },
+        visibility: 10000
+      },
+      forecast: {
+        list: [
+          { dt: Date.now() / 1000, main: { temp: 72 }, weather: [{ id: 800, description: 'clear sky' }] },
+          { dt: (Date.now() + 86400000) / 1000, main: { temp: 75 }, weather: [{ id: 801, description: 'few clouds' }] },
+          { dt: (Date.now() + 172800000) / 1000, main: { temp: 70 }, weather: [{ id: 500, description: 'light rain' }] }
+        ]
+      }
+    };
+  }
+
+  // Podcasts/Music App Functions
+  let currentPodcastTab = 'music';
+  let currentTrack = null;
+  let isPlaying = false;
+  let progressInterval;
+
+  function openPodcastsApp() {
+    document.getElementById('podcastsApp').style.display = 'block';
+    fetchPodcasts();
+  }
+
+  function closePodcastsApp() {
+    document.getElementById('podcastsApp').style.display = 'none';
+    if (progressInterval) {
+      clearInterval(progressInterval);
+    }
+  }
+
+  function refreshPodcasts() {
+    fetchPodcasts();
+  }
+
+  function switchPodcastTab(tab) {
+    currentPodcastTab = tab;
+    
+    // Update active tab
+    document.querySelectorAll('.podcast-tab').forEach(tabElement => {
+      tabElement.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Fetch content for selected tab
+    fetchPodcasts();
+  }
+
+  async function fetchPodcasts() {
+    const container = document.getElementById('podcastsContent');
+    container.innerHTML = '<div class="loading-podcasts">Loading content...</div>';
+
+    try {
+      let data;
+      
+      if (currentPodcastTab === 'now-playing') {
+        renderNowPlayingFullscreen();
+        return;
+      } else if (currentPodcastTab === 'music') {
+        data = await fetchSpotifyMusic();
+      } else if (currentPodcastTab === 'playlists') {
+        data = await fetchSpotifyPlaylists();
+      } else if (currentPodcastTab === 'podcasts') {
+        data = getMockPodcasts();
+      } else if (currentPodcastTab === 'recent') {
+        data = getMockRecentContent();
+      }
+
+      renderContentGrid(data);
+      
+    } catch (err) {
+      console.error('Failed to fetch content:', err);
+      // Fallback to mock data
+      const mockData = getMockContent(currentPodcastTab);
+      renderContentGrid(mockData);
+    }
+  }
+
+  // Spotify API Configuration
+  const SPOTIFY_CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
+  const SPOTIFY_CLIENT_SECRET = 'YOUR_SPOTIFY_CLIENT_SECRET';
+  // Use a public redirect URI that Spotify allows
+  const SPOTIFY_REDIRECT_URI = 'https://httpbin.org/get';
+  let spotifyAccessToken = null;
+  let spotifyRefreshToken = null;
+
+  // Check for authorization code on page load
+  window.addEventListener('load', function() {
+    // Check URL parameters first
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    if (code) {
+      exchangeCodeForToken(code);
+    } else {
+      // Check localStorage for code from callback page
+      const storedCode = localStorage.getItem('spotify_auth_code');
+      if (storedCode) {
+        exchangeCodeForToken(storedCode);
+        localStorage.removeItem('spotify_auth_code'); // Clean up
+      }
+    }
+  });
+
+  function initiateSpotifyAuth() {
+    const scopes = [
+      'user-read-recently-played',
+      'user-read-private',
+      'playlist-read-private',
+      'playlist-read-collaborative',
+      'user-top-read',
+      'user-read-currently-playing',
+      'user-modify-playback-state'
+    ];
+    
+    const authUrl = `https://accounts.spotify.com/authorize?client_id=${SPOTIFY_CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(SPOTIFY_REDIRECT_URI)}&scope=${encodeURIComponent(scopes.join(' '))}&show_dialog=true&state=jarvis_auth`;
+    
+    // Show instructions for manual authorization
+    const authCode = prompt(`
+🎵 Spotify Authorization Required
+
+1. Click OK to open Spotify authorization
+2. Grant permissions to JARVIS
+3. Copy the authorization code from the URL
+4. Paste it here
+
+The authorization URL will open in a new tab.
+    `);
+    
+    if (authCode && authCode.trim()) {
+      exchangeCodeForToken(authCode.trim());
+    }
+    
+    // Open the auth URL in a new tab
+    window.open(authUrl, '_blank');
+  }
+
+  async function exchangeCodeForToken(code) {
+    try {
+      const response = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + btoa(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET)
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: code,
+          redirect_uri: SPOTIFY_REDIRECT_URI
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.access_token) {
+        spotifyAccessToken = data.access_token;
+        spotifyRefreshToken = data.refresh_token;
+        
+        // Store tokens in localStorage
+        localStorage.setItem('spotify_access_token', spotifyAccessToken);
+        localStorage.setItem('spotify_refresh_token', spotifyRefreshToken);
+        
+        // Remove code from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        console.log('Spotify authorization successful!');
+        return true;
+      } else {
+        console.error('Failed to get access token:', data);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error exchanging code for token:', error);
+      return false;
+    }
+  }
+
+  async function refreshSpotifyToken() {
+    if (!spotifyRefreshToken) return null;
+    
+    try {
+      const response = await fetch('https://accounts.spotify.com/api/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': 'Basic ' + btoa(SPOTIFY_CLIENT_ID + ':' + SPOTIFY_CLIENT_SECRET)
+        },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: spotifyRefreshToken
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.access_token) {
+        spotifyAccessToken = data.access_token;
+        localStorage.setItem('spotify_access_token', spotifyAccessToken);
+        return spotifyAccessToken;
+      }
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+    }
+    
+    return null;
+  }
+
+  async function getSpotifyAccessToken() {
+    // Check localStorage first
+    const storedToken = localStorage.getItem('spotify_access_token');
+    const storedRefreshToken = localStorage.getItem('spotify_refresh_token');
+    
+    if (storedToken) {
+      spotifyAccessToken = storedToken;
+      spotifyRefreshToken = storedRefreshToken;
+      return spotifyAccessToken;
+    }
+    
+    // If no stored token, initiate authorization
+    initiateSpotifyAuth();
+    return null;
+  }
+
+  async function fetchSpotifyMusic() {
+    try {
+      let token = await getSpotifyAccessToken();
+      if (!token) {
+        console.log('No Spotify token available, using mock data');
+        return getMockSpotifyMusic();
+      }
+
+      // Fetch your recently played tracks
+      let response = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=20', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      // If token expired, try to refresh it
+      if (response.status === 401) {
+        console.log('Token expired, attempting to refresh...');
+        token = await refreshSpotifyToken();
+        if (token) {
+          response = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=20', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+        }
+      }
+
+      if (!response.ok) {
+        console.log(`Spotify API request failed (${response.status}), using mock data`);
+        return getMockSpotifyMusic();
+      }
+
+      const data = await response.json();
+      return data.items.map(item => ({
+        id: item.track.id,
+        title: item.track.name,
+        artist: item.track.artists.map(artist => artist.name).join(', '),
+        duration: formatDuration(item.track.duration_ms),
+        image: item.track.album.images[0]?.url || null,
+        icon: '🎵',
+        uri: item.track.uri
+      }));
+
+    } catch (error) {
+      console.error('Error fetching Spotify data:', error);
+      return getMockSpotifyMusic();
+    }
+  }
+
+  // New function to get currently playing track (like your Python version)
+  async function getCurrentlyPlayingTrack() {
+    try {
+      let token = await getSpotifyAccessToken();
+      if (!token) return null;
+
+      let response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.status === 401) {
+        token = await refreshSpotifyToken();
+        if (token) {
+          response = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+        }
+      }
+
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      if (!data.item) return null;
+
+      return {
+        id: data.item.id,
+        title: data.item.name,
+        artist: data.item.artists.map(artist => artist.name).join(', '),
+        album: data.item.album.name,
+        image: data.item.album.images[0]?.url || null,
+        is_playing: data.is_playing,
+        progress_ms: data.progress_ms,
+        duration_ms: data.item.duration_ms,
+        uri: data.item.uri
+      };
+
+    } catch (error) {
+      console.error('Error fetching currently playing track:', error);
+      return null;
+    }
+  }
+
+  // Playback control functions (like your Python version)
+  async function startPlayback() {
+    try {
+      let token = await getSpotifyAccessToken();
+      if (!token) return false;
+
+      const response = await fetch('https://api.spotify.com/v1/me/player/play', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Error starting playback:', error);
+      return false;
+    }
+  }
+
+  async function pausePlayback() {
+    try {
+      let token = await getSpotifyAccessToken();
+      if (!token) return false;
+
+      const response = await fetch('https://api.spotify.com/v1/me/player/pause', {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Error pausing playback:', error);
+      return false;
+    }
+  }
+
+  async function skipToNext() {
+    try {
+      let token = await getSpotifyAccessToken();
+      if (!token) return false;
+
+      const response = await fetch('https://api.spotify.com/v1/me/player/next', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Error skipping to next track:', error);
+      return false;
+    }
+  }
+
+  async function skipToPrevious() {
+    try {
+      let token = await getSpotifyAccessToken();
+      if (!token) return false;
+
+      const response = await fetch('https://api.spotify.com/v1/me/player/previous', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Error skipping to previous track:', error);
+      return false;
+    }
+  }
+
+  async function fetchSpotifyPlaylists() {
+    try {
+      let token = await getSpotifyAccessToken();
+      if (!token) {
+        console.log('No Spotify token available for playlists');
+        return [];
+      }
+
+      let response = await fetch('https://api.spotify.com/v1/me/playlists?limit=10', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      // If token expired, try to refresh it
+      if (response.status === 401) {
+        console.log('Token expired, attempting to refresh...');
+        token = await refreshSpotifyToken();
+        if (token) {
+          response = await fetch('https://api.spotify.com/v1/me/playlists?limit=10', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+        }
+      }
+
+      if (!response.ok) {
+        console.log(`Spotify playlists request failed (${response.status})`);
+        return [];
+      }
+
+      const data = await response.json();
+      return data.items.map(playlist => ({
+        id: playlist.id,
+        title: playlist.name,
+        artist: `Playlist • ${playlist.tracks.total} tracks`,
+        duration: '',
+        image: playlist.images[0]?.url || null,
+        icon: '📜',
+        uri: playlist.uri
+      }));
+
+    } catch (error) {
+      console.error('Error fetching playlists:', error);
+      return [];
+    }
+  }
+
+  function formatDuration(ms) {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  function renderContentGrid(content) {
+    const container = document.getElementById('podcastsContent');
+    
+    if (!content || content.length === 0) {
+      container.innerHTML = '<div class="loading-podcasts">No content available</div>';
+      return;
+    }
+
+    let html = '<div class="content-grid">';
+    
+    content.forEach((item, index) => {
+      const isCurrentlyPlaying = currentTrack && currentTrack.id === item.id;
+      const playingClass = isCurrentlyPlaying ? 'playing' : '';
+      
+      html += `
+        <div class="content-card ${playingClass}" onclick="playContent(${index})">
+          <div class="content-image">
+            ${item.image ? `<img src="${item.image}" alt="${item.title}">` : item.icon}
+            <div class="play-overlay">▶️</div>
+          </div>
+          <div class="content-title">${item.title}</div>
+          <div class="content-artist">${item.artist}</div>
+          <div class="content-duration">${item.duration}</div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  async function playContent(index) {
+    const content = await getCurrentContent();
+    if (!content || !content[index]) return;
+    
+    const track = content[index];
+    currentTrack = track;
+    isPlaying = true;
+    
+    // Update now playing section
+    const nowPlaying = document.getElementById('nowPlaying');
+    nowPlaying.classList.add('active');
+    nowPlaying.querySelector('.now-playing-title').textContent = `Now Playing: ${track.title}`;
+    
+    // Update play/pause button
+    const playPauseBtn = nowPlaying.querySelector('.play-pause');
+    playPauseBtn.textContent = '⏸️';
+    
+    // Start progress simulation
+    startProgressSimulation();
+    
+    // Update playing state in grid
+    updatePlayingState();
+  }
+
+  async function getCurrentContent() {
+    switch (currentPodcastTab) {
+      case 'music': return await fetchSpotifyMusic();
+      case 'playlists': return await fetchSpotifyPlaylists();
+      case 'podcasts': return getMockPodcasts();
+      case 'recent': return getMockRecentContent();
+      default: return [];
+    }
+  }
+
+  async function updatePlayingState() {
+    const content = await getCurrentContent();
+    document.querySelectorAll('.content-card').forEach((card, index) => {
+      if (content[index] && currentTrack && content[index].id === currentTrack.id) {
+        card.classList.add('playing');
+      } else {
+        card.classList.remove('playing');
+      }
+    });
+  }
+
+  function togglePlayPause() {
+    if (!currentTrack) return;
+    
+    isPlaying = !isPlaying;
+    const playPauseBtn = document.querySelector('.play-pause');
+    
+    if (isPlaying) {
+      playPauseBtn.textContent = '⏸️';
+      startProgressSimulation();
+    } else {
+      playPauseBtn.textContent = '▶️';
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+    }
+  }
+
+  function previousTrack() {
+    // Implementation for previous track
+    console.log('Previous track');
+  }
+
+  function nextTrack() {
+    // Implementation for next track
+    console.log('Next track');
+  }
+
+  function seekTrack(event) {
+    if (!currentTrack) return;
+    
+    const progressBar = event.currentTarget;
+    const rect = progressBar.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const percentage = (clickX / rect.width) * 100;
+    
+    document.getElementById('progressFill').style.width = percentage + '%';
+  }
+
+  function startProgressSimulation() {
+    if (progressInterval) {
+      clearInterval(progressInterval);
+    }
+    
+    let progress = 0;
+    progressInterval = setInterval(() => {
+      if (!isPlaying) return;
+      
+      progress += 1;
+      if (progress > 100) {
+        progress = 0;
+      }
+      
+      document.getElementById('progressFill').style.width = progress + '%';
+    }, 1000); // Update every second
+  }
+
+  function getMockSpotifyMusic() {
+    return [
+      {
+        id: 'spotify1',
+        title: 'Blinding Lights',
+        artist: 'The Weeknd',
+        duration: '3:20',
+        image: null,
+        icon: '🎵'
+      },
+      {
+        id: 'spotify2',
+        title: 'Dance Monkey',
+        artist: 'Tones and I',
+        duration: '3:29',
+        image: null,
+        icon: '🎵'
+      },
+      {
+        id: 'spotify3',
+        title: 'Shape of You',
+        artist: 'Ed Sheeran',
+        duration: '3:53',
+        image: null,
+        icon: '🎵'
+      },
+      {
+        id: 'spotify4',
+        title: 'Uptown Funk',
+        artist: 'Mark Ronson ft. Bruno Mars',
+        duration: '4:29',
+        image: null,
+        icon: '🎵'
+      },
+      {
+        id: 'spotify5',
+        title: 'Despacito',
+        artist: 'Luis Fonsi ft. Daddy Yankee',
+        duration: '4:41',
+        image: null,
+        icon: '🎵'
+      },
+      {
+        id: 'spotify6',
+        title: 'Bad Guy',
+        artist: 'Billie Eilish',
+        duration: '3:14',
+        image: null,
+        icon: '🎵'
+      }
+    ];
+  }
+
+  function getMockPodcasts() {
+    return [
+      {
+        id: 'podcast1',
+        title: 'The Joe Rogan Experience',
+        artist: 'Joe Rogan',
+        duration: '2:45:30',
+        image: null,
+        icon: '🎙️'
+      },
+      {
+        id: 'podcast2',
+        title: 'Serial',
+        artist: 'This American Life',
+        duration: '45:20',
+        image: null,
+        icon: '🎙️'
+      },
+      {
+        id: 'podcast3',
+        title: 'Radiolab',
+        artist: 'WNYC Studios',
+        duration: '58:15',
+        image: null,
+        icon: '🎙️'
+      },
+      {
+        id: 'podcast4',
+        title: 'The Daily',
+        artist: 'The New York Times',
+        duration: '22:30',
+        image: null,
+        icon: '🎙️'
+      },
+      {
+        id: 'podcast5',
+        title: 'Stuff You Should Know',
+        artist: 'iHeartRadio',
+        duration: '1:15:45',
+        image: null,
+        icon: '🎙️'
+      },
+      {
+        id: 'podcast6',
+        title: 'How I Built This',
+        artist: 'NPR',
+        duration: '52:10',
+        image: null,
+        icon: '🎙️'
+      }
+    ];
+  }
+
+  function getMockRecentContent() {
+    return [
+      {
+        id: 'recent1',
+        title: 'Recently Played Track',
+        artist: 'Various Artists',
+        duration: '3:45',
+        image: null,
+        icon: '🕒'
+      },
+      {
+        id: 'recent2',
+        title: 'Last Podcast Episode',
+        artist: 'Podcast Host',
+        duration: '1:22:15',
+        image: null,
+        icon: '🕒'
+      }
+    ];
+  }
+
+  function getMockContent(tab) {
+    switch (tab) {
+      case 'music': return getMockSpotifyMusic();
+      case 'podcasts': return getMockPodcasts();
+      case 'recent': return getMockRecentContent();
+      default: return [];
+    }
+  }
+
+  function showAlbumCover() {
+    if (!currentTrack) return;
+    
+    const albumDisplay = document.getElementById('albumCoverDisplay');
+    const albumContent = document.getElementById('albumCoverContent');
+    const trackTitle = document.getElementById('albumTrackTitle');
+    const trackArtist = document.getElementById('albumTrackArtist');
+    
+    // Set track info
+    trackTitle.textContent = currentTrack.title;
+    trackArtist.textContent = currentTrack.artist;
+    
+    // Set album cover
+    if (currentTrack.image) {
+      albumContent.innerHTML = `<img src="${currentTrack.image}" alt="${currentTrack.title}">`;
+    } else {
+      albumContent.innerHTML = `<div class="default-icon">${currentTrack.icon}</div>`;
+    }
+    
+    // Show the display
+    albumDisplay.classList.add('active');
+  }
+
+  function hideAlbumCover() {
+    const albumDisplay = document.getElementById('albumCoverDisplay');
+    albumDisplay.classList.remove('active');
+  }
+
+  function updateSpotifyAuthButton() {
+    const authBtn = document.getElementById('spotifyAuthBtn');
+    const hasToken = localStorage.getItem('spotify_access_token');
+    
+    if (hasToken) {
+      authBtn.textContent = '✅ Spotify Connected';
+      authBtn.style.background = 'rgba(29, 185, 84, 0.5)';
+      authBtn.onclick = () => {
+        localStorage.removeItem('spotify_access_token');
+        localStorage.removeItem('spotify_refresh_token');
+        spotifyAccessToken = null;
+        spotifyRefreshToken = null;
+        updateSpotifyAuthButton();
+        refreshPodcasts();
+      };
+    } else {
+      authBtn.textContent = '🔐 Connect Spotify';
+      authBtn.style.background = 'rgba(29, 185, 84, 0.3)';
+      authBtn.onclick = initiateSpotifyAuth;
+    }
+  }
+
+  // Update auth button on page load
+  window.addEventListener('load', function() {
+    updateSpotifyAuthButton();
+  });
+
+  // Now Playing Full Screen Functions
+  let nowPlayingInterval;
+  let currentPlayingTrack = null;
+
+  async function renderNowPlayingFullscreen() {
+    const container = document.getElementById('podcastsContent');
+    
+    // Get currently playing track
+    const track = await getCurrentlyPlayingTrack();
+    currentPlayingTrack = track;
+    
+    if (!track) {
+      container.innerHTML = `
+        <div class="now-playing-fullscreen">
+          <div class="now-playing-content">
+            <div class="no-track-playing">
+              <h2>🎵 No Track Playing</h2>
+              <p>Start playing music on Spotify to see it here</p>
+            </div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // Set background to album cover
+    const backgroundStyle = track.image ? 
+      `background-image: url('${track.image}')` : 
+      'background: linear-gradient(135deg, #1db954 0%, #191414 50%, #1ed760 100%)';
+
+    const progressPercent = track.progress_ms && track.duration_ms ? 
+      (track.progress_ms / track.duration_ms) * 100 : 0;
+
+    const currentTime = track.progress_ms ? formatDuration(track.progress_ms) : '0:00';
+    const totalTime = track.duration_ms ? formatDuration(track.duration_ms) : '0:00';
+
+    container.innerHTML = `
+      <div class="now-playing-fullscreen" style="${backgroundStyle}">
+        <div class="now-playing-content">
+          <div class="track-info-banner">
+            <div class="track-title-large">${track.title}</div>
+            <div class="track-artist-large">${track.artist}</div>
+            <div class="track-album-large">${track.album}</div>
+          </div>
+          
+          <div class="playback-controls">
+            <button class="control-btn-large" onclick="handlePreviousTrack()">⏮️</button>
+            <button class="control-btn-large play-pause" onclick="handlePlayPause()">
+              ${track.is_playing ? '⏸️' : '▶️'}
+            </button>
+            <button class="control-btn-large" onclick="handleNextTrack()">⏭️</button>
+          </div>
+          
+          <div class="progress-bar-large" onclick="handleSeek(event)">
+            <div class="progress-fill-large" style="width: ${progressPercent}%"></div>
+          </div>
+          
+          <div class="time-display">
+            <span>${currentTime}</span>
+            <span>${totalTime}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Start real-time updates
+    startNowPlayingUpdates();
+  }
+
+  function startNowPlayingUpdates() {
+    if (nowPlayingInterval) {
+      clearInterval(nowPlayingInterval);
+    }
+    
+    // Adaptive refresh: faster when playing, slower when paused
+    let refreshInterval = 5000; // Default 5 seconds
+    
+    nowPlayingInterval = setInterval(async () => {
+      if (currentPodcastTab === 'now-playing') {
+        const track = await getCurrentlyPlayingTrack();
+        
+        if (track && track.is_playing) {
+          // Update more frequently when playing
+          refreshInterval = 2000; // 2 seconds when playing
+        } else {
+          // Update less frequently when paused/stopped
+          refreshInterval = 10000; // 10 seconds when paused
+        }
+        
+        await renderNowPlayingFullscreen();
+        
+        // Adjust interval based on playback state
+        clearInterval(nowPlayingInterval);
+        nowPlayingInterval = setInterval(async () => {
+          if (currentPodcastTab === 'now-playing') {
+            await renderNowPlayingFullscreen();
+          }
+        }, refreshInterval);
+      }
+    }, refreshInterval);
+  }
+
+  async function handlePlayPause() {
+    if (!currentPlayingTrack) return;
+    
+    let success;
+    if (currentPlayingTrack.is_playing) {
+      success = await pausePlayback();
+    } else {
+      success = await startPlayback();
+    }
+    
+    if (success) {
+      // Update immediately
+      await renderNowPlayingFullscreen();
+    }
+  }
+
+  async function handleNextTrack() {
+    const success = await skipToNext();
+    if (success) {
+      await renderNowPlayingFullscreen();
+    }
+  }
+
+  async function handlePreviousTrack() {
+    const success = await skipToPrevious();
+    if (success) {
+      await renderNowPlayingFullscreen();
+    }
+  }
+
+  function handleSeek(event) {
+    if (!currentPlayingTrack || !currentPlayingTrack.duration_ms) return;
+    
+    const progressBar = event.currentTarget;
+    const rect = progressBar.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const percentage = (clickX / rect.width) * 100;
+    
+    // Update progress bar immediately
+    const progressFill = progressBar.querySelector('.progress-fill-large');
+    if (progressFill) {
+      progressFill.style.width = percentage + '%';
+    }
+    
+    // Calculate new time and update display
+    const newTime = Math.floor((percentage / 100) * currentPlayingTrack.duration_ms);
+    const timeDisplay = progressBar.parentElement.querySelector('.time-display');
+    if (timeDisplay) {
+      const currentTimeSpan = timeDisplay.querySelector('span:first-child');
+      if (currentTimeSpan) {
+        currentTimeSpan.textContent = formatDuration(newTime);
+      }
+    }
+  }
+
+  // Clean up interval when switching tabs
+  function switchPodcastTab(tab) {
+    if (nowPlayingInterval) {
+      clearInterval(nowPlayingInterval);
+    }
+    
+    currentPodcastTab = tab;
+    
+    // Update active tab
+    document.querySelectorAll('.podcast-tab').forEach(tabElement => {
+      tabElement.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Fetch content for selected tab
+    fetchPodcasts();
+  }
+
+  // Travel Map App Functions
+  let currentTravelTab = 'map';
+  let travelData = null;
+
+  function openTravelApp() {
+    document.getElementById('travelApp').style.display = 'block';
+    loadTravelData();
+  }
+
+  function closeTravelApp() {
+    document.getElementById('travelApp').style.display = 'none';
+  }
+
+  function switchTravelTab(tab) {
+    currentTravelTab = tab;
+    
+    // Update active tab
+    document.querySelectorAll('.travel-tab').forEach(tabElement => {
+      tabElement.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Show/hide appropriate views
+    document.getElementById('mapView').style.display = tab === 'map' ? 'block' : 'none';
+    document.getElementById('listView').style.display = tab === 'list' ? 'block' : 'none';
+    document.getElementById('regionsView').style.display = tab === 'regions' ? 'block' : 'none';
+    document.getElementById('travelStats').style.display = tab === 'stats' ? 'grid' : 'none';
+    
+    // Load appropriate data
+    if (tab === 'stats') {
+      updateTravelStats();
+    } else if (tab === 'list') {
+      renderTravelList();
+    } else if (tab === 'regions') {
+      renderRegionsView();
+    }
+  }
+
+  function refreshTravelMap() {
+    loadTravelData();
+  }
+
+  function loadTravelData() {
+    // Parse the travel data from the user's list
+    const travelData = parseTravelData();
+    renderTravelMap(travelData);
+    updateTravelStats();
+  }
+
+  function parseTravelData() {
+    // This is the structured data from your travel list
+    return {
+      regions: {
+        "Northern Europe": {
+          locations: [
+            { name: "Stockholm", visited: false, type: "specific", country: "Sweden" },
+            { name: "Oslo", visited: false, type: "specific", country: "Norway" },
+            { name: "Copenhagen", visited: false, type: "specific", country: "Denmark" },
+            { name: "Helsinki", visited: false, type: "specific", country: "Finland" },
+            { name: "Reykjavik", visited: false, type: "specific", country: "Iceland" }
+          ],
+          coordinates: { x: 52, y: 35 }
+        },
+        "Mainland Europe": {
+          locations: [
+            { name: "Paris", visited: false, type: "specific", country: "France" },
+            { name: "Berlin", visited: false, type: "specific", country: "Germany" },
+            { name: "Amsterdam", visited: false, type: "specific", country: "Netherlands" },
+            { name: "Vienna", visited: false, type: "specific", country: "Austria" },
+            { name: "Prague", visited: false, type: "specific", country: "Czech Republic" },
+            { name: "Budapest", visited: false, type: "specific", country: "Hungary" },
+            { name: "Warsaw", visited: false, type: "specific", country: "Poland" },
+            { name: "Moscow", visited: false, type: "specific", country: "Russia" },
+            { name: "Rome", visited: false, type: "specific", country: "Italy" },
+            { name: "Madrid", visited: false, type: "specific", country: "Spain" }
+          ],
+          coordinates: { x: 52, y: 46 }
+        },
+        "Mediterranean": {
+          locations: [
+            { name: "Barcelona", visited: false, type: "specific", country: "Spain" },
+            { name: "Athens", visited: false, type: "specific", country: "Greece" },
+            { name: "Istanbul", visited: false, type: "specific", country: "Turkey" },
+            { name: "Dubrovnik", visited: false, type: "specific", country: "Croatia" },
+            { name: "Santorini", visited: false, type: "specific", country: "Greece" },
+            { name: "Malta", visited: false, type: "specific", country: "Malta" },
+            { name: "Cyprus", visited: false, type: "specific", country: "Cyprus" },
+            { name: "Sicily", visited: false, type: "specific", country: "Italy" },
+            { name: "Sardinia", visited: false, type: "specific", country: "Italy" },
+            { name: "Crete", visited: false, type: "specific", country: "Greece" }
+          ],
+          coordinates: { x: 52, y: 51 }
+        },
+        "North America": {
+          locations: [
+            { name: "New York City", visited: false, type: "specific", country: "USA" },
+            { name: "Los Angeles", visited: false, type: "specific", country: "USA" },
+            { name: "Chicago", visited: false, type: "specific", country: "USA" },
+            { name: "Toronto", visited: false, type: "specific", country: "Canada" },
+            { name: "Vancouver", visited: false, type: "specific", country: "Canada" },
+            { name: "Montreal", visited: false, type: "specific", country: "Canada" },
+            { name: "Mexico City", visited: false, type: "specific", country: "Mexico" },
+            { name: "Cancun", visited: false, type: "specific", country: "Mexico" },
+            { name: "San Francisco", visited: false, type: "specific", country: "USA" },
+            { name: "Miami", visited: false, type: "specific", country: "USA" }
+          ],
+          coordinates: { x: 21, y: 52 }
+        },
+        "Middle East": {
+          locations: [
+            { name: "Jerusalem", visited: false, type: "specific", country: "Israel" },
+            { name: "Tel Aviv", visited: false, type: "specific", country: "Israel" },
+            { name: "Amman", visited: false, type: "specific", country: "Jordan" },
+            { name: "Petra", visited: false, type: "specific", country: "Jordan" },
+            { name: "Beirut", visited: false, type: "specific", country: "Lebanon" },
+            { name: "Damascus", visited: false, type: "specific", country: "Syria" },
+            { name: "Baghdad", visited: false, type: "specific", country: "Iraq" },
+            { name: "Tehran", visited: false, type: "specific", country: "Iran" },
+            { name: "Dubai", visited: false, type: "specific", country: "UAE" },
+            { name: "Abu Dhabi", visited: false, type: "specific", country: "UAE" }
+          ],
+          coordinates: { x: 58, y: 54 }
+        },
+        "Africa": {
+          locations: [
+            { name: "Cairo", visited: false, type: "specific", country: "Egypt" },
+            { name: "Cape Town", visited: false, type: "specific", country: "South Africa" },
+            { name: "Johannesburg", visited: false, type: "specific", country: "South Africa" },
+            { name: "Nairobi", visited: false, type: "specific", country: "Kenya" },
+            { name: "Marrakech", visited: false, type: "specific", country: "Morocco" },
+            { name: "Lagos", visited: false, type: "specific", country: "Nigeria" },
+            { name: "Accra", visited: false, type: "specific", country: "Ghana" },
+            { name: "Addis Ababa", visited: false, type: "specific", country: "Ethiopia" },
+            { name: "Dar es Salaam", visited: false, type: "specific", country: "Tanzania" },
+            { name: "Victoria Falls", visited: false, type: "specific", country: "Zambia/Zimbabwe" }
+          ],
+          coordinates: { x: 52, y: 65 }
+        },
+        "South America": {
+          locations: [
+            { name: "Rio de Janeiro", visited: false, type: "specific", country: "Brazil" },
+            { name: "São Paulo", visited: false, type: "specific", country: "Brazil" },
+            { name: "Buenos Aires", visited: false, type: "specific", country: "Argentina" },
+            { name: "Lima", visited: false, type: "specific", country: "Peru" },
+            { name: "Bogotá", visited: false, type: "specific", country: "Colombia" },
+            { name: "Santiago", visited: false, type: "specific", country: "Chile" },
+            { name: "Caracas", visited: false, type: "specific", country: "Venezuela" },
+            { name: "Quito", visited: false, type: "specific", country: "Ecuador" },
+            { name: "La Paz", visited: false, type: "specific", country: "Bolivia" },
+            { name: "Montevideo", visited: false, type: "specific", country: "Uruguay" }
+          ],
+          coordinates: { x: 31, y: 74 }
+        },
+        "Asia": {
+          locations: [
+            { name: "Tokyo", visited: false, type: "specific", country: "Japan" },
+            { name: "Beijing", visited: false, type: "specific", country: "China" },
+            { name: "Shanghai", visited: false, type: "specific", country: "China" },
+            { name: "Seoul", visited: false, type: "specific", country: "South Korea" },
+            { name: "Bangkok", visited: false, type: "specific", country: "Thailand" },
+            { name: "Singapore", visited: false, type: "specific", country: "Singapore" },
+            { name: "Mumbai", visited: false, type: "specific", country: "India" },
+            { name: "Delhi", visited: false, type: "specific", country: "India" },
+            { name: "Hanoi", visited: false, type: "specific", country: "Vietnam" },
+            { name: "Manila", visited: false, type: "specific", country: "Philippines" }
+          ],
+          coordinates: { x: 75, y: 60 }
+        },
+        "Australia and Polynesia": {
+          locations: [
+            { name: "Sydney", visited: false, type: "specific", country: "Australia" },
+            { name: "Melbourne", visited: false, type: "specific", country: "Australia" },
+            { name: "Brisbane", visited: false, type: "specific", country: "Australia" },
+            { name: "Perth", visited: false, type: "specific", country: "Australia" },
+            { name: "Auckland", visited: false, type: "specific", country: "New Zealand" },
+            { name: "Wellington", visited: false, type: "specific", country: "New Zealand" },
+            { name: "Honolulu", visited: false, type: "specific", country: "USA" },
+            { name: "Fiji", visited: false, type: "specific", country: "Fiji" },
+            { name: "Tahiti", visited: false, type: "specific", country: "French Polynesia" },
+            { name: "Papua New Guinea", visited: false, type: "specific", country: "Papua New Guinea" }
+          ],
+          coordinates: { x: 82, y: 80 }
+        },
+        "United Kingdom": {
+          locations: [
+            { name: "Dragon mountains", visited: false, type: "specific", country: "Wales" },
+            { name: "Slieve league cliffs", visited: false, type: "specific", country: "Ireland" },
+            { name: "Mount errigal", visited: false, type: "specific", country: "Ireland" },
+            { name: "Gap of Dunloe", visited: false, type: "specific", country: "Ireland" },
+            { name: "Skellig islands", visited: false, type: "specific", country: "Ireland" },
+            { name: "Scotsman royal train", visited: false, type: "specific", country: "Scotland" },
+            { name: "Wales", visited: false, type: "region", country: "Wales" },
+            { name: "The Ritz", visited: false, type: "specific", country: "England" },
+            { name: "Borough Market, London", visited: false, type: "specific" },
+            { name: "Queens Wood Cafe, London", visited: false, type: "specific" },
+            { name: "University of Edinburgh", visited: false, type: "specific" },
+            { name: "Stonehenge", visited: false, type: "specific" }
+          ],
+          coordinates: { x: 45, y: 40 }
+        }
+      }
+    };
+  }
+
+  function renderTravelMap(data) {
+    const mapContainer = document.getElementById('worldMap');
+    mapContainer.innerHTML = ''; // Clear existing markers
+    
+    Object.entries(data.regions).forEach(([regionName, regionData]) => {
+      const marker = document.createElement('div');
+      marker.className = 'map-marker';
+      
+      // Determine marker type and styling
+      const hasVisited = regionData.locations.some(loc => loc.visited);
+      const hasRegions = regionData.locations.some(loc => loc.type === 'region');
+      
+      if (hasVisited) {
+        marker.classList.add('visited');
+      } else if (hasRegions) {
+        marker.classList.add('region');
+      }
+      
+      // Position marker
+      marker.style.left = `${regionData.coordinates.x}%`;
+      marker.style.top = `${regionData.coordinates.y}%`;
+      
+      // Create tooltip
+      const tooltip = document.createElement('div');
+      tooltip.className = 'marker-tooltip';
+      tooltip.textContent = regionName;
+      marker.appendChild(tooltip);
+      
+      // Add click handler
+      marker.addEventListener('click', () => {
+        showRegionDetails(regionName, regionData);
+      });
+      
+      mapContainer.appendChild(marker);
+    });
+  }
+
+  function showRegionDetails(regionName, regionData) {
+    const visitedCount = regionData.locations.filter(loc => loc.visited).length;
+    const totalCount = regionData.locations.length;
+    
+    alert(`${regionName}\n\nLocations: ${totalCount}\nVisited: ${visitedCount}\n\nClick "Travel List" tab to see all locations in this region.`);
+  }
+
+  function updateTravelStats() {
+    const data = parseTravelData();
+    let totalLocations = 0;
+    let visitedLocations = 0;
+    let plannedLocations = 0;
+    let totalRegions = Object.keys(data.regions).length;
+    
+    Object.values(data.regions).forEach(region => {
+      region.locations.forEach(location => {
+        totalLocations++;
+        if (location.visited) {
+          visitedLocations++;
+        } else {
+          plannedLocations++;
+        }
+      });
+    });
+    
+    document.getElementById('totalLocations').textContent = totalLocations;
+    document.getElementById('visitedLocations').textContent = visitedLocations;
+    document.getElementById('plannedLocations').textContent = plannedLocations;
+    document.getElementById('totalRegions').textContent = totalRegions;
+  }
+
+  function renderTravelList() {
+    const data = parseTravelData();
+    const listContainer = document.getElementById('listView');
+    
+    let html = '';
+    Object.entries(data.regions).forEach(([regionName, regionData]) => {
+      html += `
+        <div class="region-section">
+          <div class="region-title">${regionName}</div>
+      `;
+      
+      regionData.locations.forEach(location => {
+        const statusClass = location.visited ? 'status-visited' : 
+                           location.type === 'region' ? 'status-region' : 'status-planned';
+        const statusText = location.visited ? 'Visited' : 
+                          location.type === 'region' ? 'Region' : 'Planned';
+        
+        html += `
+          <div class="location-item">
+            <input type="checkbox" class="location-checkbox" 
+                   ${location.visited ? 'checked' : ''} 
+                   onchange="toggleLocationStatus('${regionName}', '${location.name}', this.checked)">
+            <div class="location-name">${location.name}</div>
+            <div class="location-status ${statusClass}">${statusText}</div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+    });
+    
+    listContainer.innerHTML = html;
+  }
+
+  function renderRegionsView() {
+    const data = parseTravelData();
+    const regionsContainer = document.getElementById('regionsView');
+    
+    let html = '';
+    Object.entries(data.regions).forEach(([regionName, regionData]) => {
+      const visitedCount = regionData.locations.filter(loc => loc.visited).length;
+      const totalCount = regionData.locations.length;
+      const percentage = totalCount > 0 ? Math.round((visitedCount / totalCount) * 100) : 0;
+      
+      html += `
+        <div class="region-section">
+          <div class="region-title">
+            ${regionName} (${visitedCount}/${totalCount} - ${percentage}%)
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${totalCount}</div>
+            <div class="stat-label">Total Locations</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${visitedCount}</div>
+            <div class="stat-label">Visited</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">${totalCount - visitedCount}</div>
+            <div class="stat-label">Remaining</div>
+          </div>
+        </div>
+      `;
+    });
+    
+    regionsContainer.innerHTML = html;
+  }
+
+  function toggleLocationStatus(regionName, locationName, visited) {
+    // In a real app, this would save to localStorage or a database
+    console.log(`Toggling ${locationName} in ${regionName} to ${visited ? 'visited' : 'planned'}`);
+    
+    // For demo purposes, we'll just update the display
+    if (currentTravelTab === 'stats') {
+      updateTravelStats();
+    }
+    
+    // Show feedback
+    const status = visited ? 'visited' : 'planned';
+    showTextOverlay(`Marked ${locationName} as ${status}`);
+    setTimeout(hideTextOverlay, 2000);
+  }
+
+  </script>
+</body>
+</html>
